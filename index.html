@@ -3,77 +3,160 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AI Faculty Explorer</title>
+  <title>AI Faculty Connections Explorer</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <style>
+    * {
+      box-sizing: border-box;
+    }
+
     body {
-      font-family: Arial, sans-serif;
       margin: 0;
-      background: #f5f7fb;
-      color: #222;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f3f5f9;
+      color: #1f2937;
     }
 
     header {
-      background: white;
-      padding: 20px 30px;
-      border-bottom: 1px solid #ddd;
+      background: #ffffff;
+      padding: 24px 40px;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    header h1 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    header p {
+      margin: 8px 0 0;
+      color: #6b7280;
     }
 
     .container {
-      max-width: 1100px;
+      max-width: 1250px;
       margin: 30px auto;
       padding: 0 20px;
-    }
-
-    .card {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
-      margin-bottom: 20px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-    }
-
-    select {
-      width: 100%;
-      padding: 12px;
-      font-size: 16px;
-      border-radius: 8px;
-      border: 1px solid #ccc;
-    }
-
-    .profile h2 {
-      margin-bottom: 5px;
-    }
-
-    .label {
-      font-weight: bold;
-      margin-top: 15px;
     }
 
     .stats {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 15px;
+      gap: 18px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    }
+
+    .stat-number {
+      font-size: 34px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      color: #6b7280;
+      font-size: 15px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 22px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+      margin-bottom: 22px;
+    }
+
+    .card h2 {
+      margin-top: 0;
+      font-size: 21px;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 1px solid #d1d5db;
+      border-radius: 8px;
+      font-size: 15px;
+      margin-top: 8px;
+    }
+
+    .profile-name {
+      font-size: 25px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .department {
+      color: #6b7280;
       margin-bottom: 20px;
     }
 
-    .stat {
-      background: white;
-      padding: 20px;
-      border-radius: 12px;
+    .section-title {
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 8px;
+      color: #374151;
+    }
+
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      background: #eef2ff;
+      padding: 7px 11px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    .placeholder {
+      color: #9ca3af;
       text-align: center;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      padding: 40px 10px;
     }
 
-    .stat h2 {
-      margin: 0;
-      font-size: 28px;
+    .network-placeholder {
+      min-height: 340px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      border: 2px dashed #d1d5db;
+      border-radius: 12px;
+      color: #9ca3af;
+      text-align: center;
     }
 
-    @media (max-width: 700px) {
+    .footer-note {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 13px;
+      padding: 20px;
+    }
+
+    @media (max-width: 850px) {
       .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .main-grid {
         grid-template-columns: 1fr;
       }
     }
@@ -83,84 +166,142 @@
 <body>
 
 <header>
-  <h1>AI Faculty Explorer</h1>
-  <p>Explore AI-related research, interests and connections.</p>
+  <h1>AI Faculty Connections Explorer</h1>
+  <p>Explore colleagues, research interests, organisations and AI connections.</p>
 </header>
 
 <div class="container">
 
   <div class="stats">
-    <div class="stat">
-      <h2 id="staffCount">0</h2>
-      <p>Colleagues</p>
+
+    <div class="stat-card">
+      <div class="stat-number" id="staffCount">0</div>
+      <div class="stat-label">Colleagues</div>
     </div>
 
-    <div class="stat">
-      <h2 id="themeCount">0</h2>
-      <p>Research Themes</p>
+    <div class="stat-card">
+      <div class="stat-number" id="themeCount">0</div>
+      <div class="stat-label">Research Themes</div>
     </div>
 
-    <div class="stat">
-      <h2 id="orgCount">0</h2>
-      <p>External Organisations</p>
+    <div class="stat-card">
+      <div class="stat-number" id="orgCount">0</div>
+      <div class="stat-label">External Organisations</div>
     </div>
+
   </div>
 
-  <div class="card">
-    <h2>Choose a colleague</h2>
-    <select id="facultySelect">
-      <option value="">Select a colleague</option>
-    </select>
+  <div class="main-grid">
+
+    <div>
+
+      <div class="card">
+        <h2>Choose a colleague</h2>
+
+        <select id="facultySelect">
+          <option value="">Select a colleague</option>
+        </select>
+      </div>
+
+      <div class="card">
+
+        <h2>Search / Filter</h2>
+
+        <input
+          type="text"
+          id="searchBox"
+          placeholder="Search AI, VR, heritage, education..."
+        />
+
+      </div>
+
+    </div>
+
+    <div>
+
+      <div class="card" id="profileCard">
+
+        <div class="placeholder">
+          Select a colleague to view their profile.
+        </div>
+
+      </div>
+
+      <div class="card">
+
+        <h2>Interactive Network</h2>
+
+        <div class="network-placeholder">
+          Network graph will appear here in Step 8
+        </div>
+
+      </div>
+
+    </div>
+
   </div>
 
-  <div class="card profile" id="profileCard">
-    <h2>Faculty Profile</h2>
-    <p>Select a colleague to view their information.</p>
+  <div class="footer-note">
+    Faculty of Arts and Humanities — AI Connections Explorer
   </div>
 
 </div>
 
 <script>
-  const supabaseUrl = "https://qmlguyfmipslinbaqcgh.supabase.co";
-  const supabaseKey = "sb_publishable_roPlnce2JAfGz_DXCy3fuA_8gc9ejVZ";
 
-  const supabaseClient = supabase.createClient(
-    supabaseUrl,
-    supabaseKey
-  );
+const supabaseUrl =
+"https://qmlguyfmipslinbaqcgh.supabase.co";
 
-  let facultyData = [];
+const supabaseKey =
+"sb_publishable_roPlnce2JAfGz_DXCy3fuA_8gc9ejVZ";
 
-  async function loadFacultyData() {
+const supabaseClient =
+supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
 
-    const { data, error } = await supabaseClient
+let facultyData = [];
+
+async function loadFacultyData() {
+
+  const { data, error } =
+    await supabaseClient
       .from("ai_faculty_data")
       .select("*");
 
-    if (error) {
-      console.error(error);
+  if (error) {
 
-      document.getElementById("profileCard").innerHTML =
-        "<h2>Error</h2><p>Could not load data from Supabase.</p>";
+    console.error(error);
 
-      return;
-    }
+    document.getElementById(
+      "profileCard"
+    ).innerHTML =
+      "<p>Could not load faculty data.</p>";
 
-    facultyData = data;
-
-    document.getElementById("staffCount").textContent =
-      facultyData.length;
-
-    populateFacultyDropdown();
-    calculateStats();
+    return;
   }
 
-  function populateFacultyDropdown() {
+  facultyData = data;
 
-    const select =
-      document.getElementById("facultySelect");
+  document.getElementById(
+    "staffCount"
+  ).textContent = facultyData.length;
 
-    facultyData.forEach((person, index) => {
+  populateDropdown();
+
+  calculateStats();
+}
+
+function populateDropdown() {
+
+  const select =
+    document.getElementById(
+      "facultySelect"
+    );
+
+  facultyData.forEach(
+    (person, index) => {
 
       const option =
         document.createElement("option");
@@ -168,116 +309,222 @@
       option.value = index;
 
       option.textContent =
-        person.name || "Unnamed colleague";
+        person.name ||
+        "Unnamed colleague";
 
       select.appendChild(option);
-    });
-  }
 
-  function calculateStats() {
+    }
+  );
+}
 
-    const themes = new Set();
-    const organisations = new Set();
+function calculateStats() {
 
-    facultyData.forEach(person => {
+  const themes = new Set();
 
-      if (person.keywords) {
+  const organisations =
+    new Set();
 
-        person.keywords
-          .split(",")
-          .forEach(item => {
+  facultyData.forEach(person => {
 
-            if (item.trim()) {
-              themes.add(item.trim());
-            }
+    splitItems(person.keywords)
+      .forEach(item =>
+        themes.add(item)
+      );
 
-          });
+    splitItems(
+      person.external_organisations
+    ).forEach(item =>
+      organisations.add(item)
+    );
+
+  });
+
+  document.getElementById(
+    "themeCount"
+  ).textContent = themes.size;
+
+  document.getElementById(
+    "orgCount"
+  ).textContent =
+    organisations.size;
+}
+
+function splitItems(text) {
+
+  if (!text) return [];
+
+  return text
+    .split(/[,;\n]/)
+    .map(item => item.trim())
+    .filter(item => item);
+}
+
+function createTags(text) {
+
+  const items =
+    splitItems(text);
+
+  if (!items.length)
+    return "Not provided";
+
+  return `
+    <div class="tag-container">
+      ${
+        items.map(
+          item =>
+          `<span class="tag">${item}</span>`
+        ).join("")
       }
+    </div>
+  `;
+}
 
-      if (person.external_organisations) {
+function showProfile(person) {
 
-        person.external_organisations
-          .split(",")
-          .forEach(item => {
+  const profile =
+    document.getElementById(
+      "profileCard"
+    );
 
-            if (item.trim()) {
-              organisations.add(item.trim());
-            }
+  profile.innerHTML = `
 
-          });
-      }
+    <div class="profile-name">
+      ${person.name || "Unnamed colleague"}
+    </div>
 
-    });
+    <div class="department">
+      ${person.department || "Department not provided"}
+    </div>
 
-    document.getElementById("themeCount").textContent =
-      themes.size;
+    <div class="section-title">
+      Research Groups
+    </div>
 
-    document.getElementById("orgCount").textContent =
-      organisations.size;
-  }
+    <div>
+      ${createTags(person.research_groups)}
+    </div>
 
-  document
-    .getElementById("facultySelect")
-    .addEventListener("change", function () {
+    <div class="section-title">
+      Keywords / Interests
+    </div>
 
-      if (this.value === "") {
-        return;
-      }
+    <div>
+      ${createTags(person.keywords)}
+    </div>
 
-      const person =
-        facultyData[this.value];
+    <div class="section-title">
+      AI Research / Practice
+    </div>
 
-      document.getElementById("profileCard").innerHTML = `
-        <h2>${person.name || "Unnamed colleague"}</h2>
+    <div>
+      ${person.ai_research || "Not provided"}
+    </div>
 
-        <p>
-          <strong>Department:</strong>
-          ${person.department || "Not provided"}
-        </p>
+    <div class="section-title">
+      Future Directions
+    </div>
 
-        <p class="label">
-          Research Groups
-        </p>
+    <div>
+      ${person.future_directions || "Not provided"}
+    </div>
 
-        <p>
-          ${person.research_groups || "Not provided"}
-        </p>
+    <div class="section-title">
+      External Organisations / Sectors
+    </div>
 
-        <p class="label">
-          Keywords / Interests
-        </p>
+    <div>
+      ${createTags(person.external_organisations)}
+    </div>
 
-        <p>
-          ${person.keywords || "Not provided"}
-        </p>
+  `;
+}
 
-        <p class="label">
-          AI Research
-        </p>
+document
+.getElementById("facultySelect")
+.addEventListener(
+  "change",
+  function () {
 
-        <p>
-          ${person.ai_research || "Not provided"}
-        </p>
+    if (this.value === "") {
 
-        <p class="label">
-          Future Directions
-        </p>
-
-        <p>
-          ${person.future_directions || "Not provided"}
-        </p>
-
-        <p class="label">
-          External Organisations
-        </p>
-
-        <p>
-          ${person.external_organisations || "Not provided"}
-        </p>
+      document.getElementById(
+        "profileCard"
+      ).innerHTML = `
+        <div class="placeholder">
+          Select a colleague to view their profile.
+        </div>
       `;
-    });
 
-  loadFacultyData();
+      return;
+    }
+
+    showProfile(
+      facultyData[this.value]
+    );
+
+  }
+);
+
+document
+.getElementById("searchBox")
+.addEventListener(
+  "input",
+  function () {
+
+    const query =
+      this.value
+        .toLowerCase()
+        .trim();
+
+    const select =
+      document.getElementById(
+        "facultySelect"
+      );
+
+    select.innerHTML =
+      '<option value="">Select a colleague</option>';
+
+    facultyData.forEach(
+      (person, index) => {
+
+        const combined = `
+          ${person.name || ""}
+          ${person.department || ""}
+          ${person.keywords || ""}
+          ${person.research_groups || ""}
+          ${person.ai_research || ""}
+          ${person.future_directions || ""}
+          ${person.external_organisations || ""}
+        `.toLowerCase();
+
+        if (
+          !query ||
+          combined.includes(query)
+        ) {
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+          option.value = index;
+
+          option.textContent =
+            person.name ||
+            "Unnamed colleague";
+
+          select.appendChild(option);
+        }
+
+      }
+    );
+
+  }
+);
+
+loadFacultyData();
+
 </script>
 
 </body>
