@@ -308,6 +308,10 @@
       </div>
     </div>
 
+    <div style="margin:-10px 0 22px;color:#64748b;font-size:13px;">
+      Themes and organisation counts use a standardised taxonomy, so similar free-text entries are grouped together.
+    </div>
+
     <div class="controls">
       <div class="control-box">
         <label>Choose a colleague</label>
@@ -425,6 +429,82 @@
     const text = String(value || "").trim();
     if (text.length <= maxLength) return text;
     return text.slice(0, maxLength - 1).trimEnd() + "…";
+  }
+
+
+  const THEME_TAXONOMY = [
+    ["AI in education & assessment", ["assessment", "education", "teaching", "learning", "academic skills", "marking", "learner", "school"]],
+    ["Language learning & translation", ["language", "linguistic", "translation", "phonological", "corpus", "writing assessment"]],
+    ["Immersive media, VR & storytelling", ["vr", "immersive", "storytelling", "interactive fiction", "digital literature", "sound design", "ar studios"]],
+    ["Policy & public engagement", ["policy", "public", "engagement", "community", "rights", "geopolitical"]],
+    ["Arts & critical theory", ["art", "arts", "critical theory", "literature", "music", "creative labour", "media industries"]],
+    ["Machine learning & data mining", ["machine learning", "data mining", "information extraction", "llm", "model"]],
+    ["Cultural heritage & archives", ["heritage", "archive", "archival", "archaeolog", "museum", "holocaust", "shipwreck", "ancient pollen"]],
+    ["People-centred & participatory AI", ["people-centred", "participatory", "co-creation", "human-ai collaboration", "community"]],
+    ["Human autonomy & agency", ["autonomy", "agency", "decision-support", "influence", "manipulation", "metacognition"]],
+    ["AI ethics", ["ethic", "responsible ai", "legal", "bias", "fairness", "rights"]],
+    ["AI tools & workflows", ["copilot", "workflow", "ai-assisted", "ai use", "utility", "office-level", "tool"]],
+    ["Accessibility & inclusive interaction", ["accessibility", "inclusive", "disability", "hearing-diverse", "intent recognition"]],
+    ["Generative imaging & creative AI", ["generative", "creative ai", "ai-authorship", "sticky ai", "imaging"]],
+    ["Algorithms & digital infrastructure", ["algorithm", "digital infrastructure", "automated", "data", "technical"]],
+    ["Digital humanities", ["digital humanities", "digital literature", "historical", "history of llm", "archives"]],
+    ["Creative co-creation", ["co-creation", "creative", "participatory", "collaborative"]],
+    ["Future of work", ["future of work", "precarity", "labour", "workforce", "apprenticeship"]],
+    ["Enterprise, consultancy & KE", ["enterprise", "consultancy", "knowledge exchange", "industry", "business"]],
+    ["AI consciousness", ["consciousness", "emotion", "metacognition", "human autonomy"]],
+    ["Children & digital rights", ["children", "child", "digital rights", "school competition"]]
+  ];
+
+  const ORGANISATION_TAXONOMY = [
+    ["Education sector", ["department for education", "school", "education", "teacher", "learner"]],
+    ["Software & technology companies", ["software", "technology", "ai expertise", "technical ai", "copilot"]],
+    ["Museums & heritage organisations", ["museum", "heritage organisation", "historic england", "tate britain", "kiran nadar"]],
+    ["Universities & research institutes", ["university", "institute", "imperial college", "tu delft", "oxford", "southampton"]],
+    ["Biennales & cultural foundations", ["biennale", "foundation", "gujral", "british council"]],
+    ["Community & public groups", ["community", "young people", "charit", "public", "local communities"]],
+    ["Archaeology & GLAM sector", ["archaeology", "archaeological", "glam"]],
+    ["Accessibility & disability sector", ["accessibility", "disability", "hearing-diverse"]],
+    ["VR/AR & immersive-media sector", ["vr/ar", "immersive media", "sound design", "inclusive design"]],
+    ["Creative industries & media", ["creative industries", "media industries", "arts groups", "cinema", "creative work"]],
+    ["Government & public bodies", ["commission", "government", "public sector", "department"]],
+    ["Marine & Earth observation sector", ["marine", "oceanography", "copernicus", "emodnet", "hydrographic", "earth observation", "geological"]],
+    ["International research networks", ["ehri-eric", "ehri-uk", "consortium", "network"]],
+    ["Business & consultancy sector", ["business", "consultancy", "industry", "companies"]],
+    ["Cultural & heritage charities", ["world jewish relief", "charity", "cultural heritage organisations"]],
+    ["Research funding & partnership bodies", ["alan turing", "funding", "research institute", "special interest group"]]
+  ];
+
+  function personSearchText(person) {
+    return `
+      ${person.name || ""}
+      ${person.department || ""}
+      ${person.research_groups || ""}
+      ${person.keywords || ""}
+      ${person.ai_research || ""}
+      ${person.enterprise_projects || ""}
+      ${person.future_directions || ""}
+      ${person.external_organisations || ""}
+      ${person.support_training || ""}
+      ${person.additional_comments || ""}
+    `.toLowerCase();
+  }
+
+  function canonicalFromTaxonomy(person, taxonomy) {
+    const text = personSearchText(person);
+
+    return taxonomy
+      .filter(([label, keywords]) =>
+        keywords.some(keyword => text.includes(keyword))
+      )
+      .map(([label]) => label);
+  }
+
+  function canonicalThemes(person) {
+    return canonicalFromTaxonomy(person, THEME_TAXONOMY);
+  }
+
+  function canonicalOrganisations(person) {
+    return canonicalFromTaxonomy(person, ORGANISATION_TAXONOMY);
   }
 
 
@@ -653,15 +733,11 @@
 
     facultyData.forEach(person => {
 
-      splitItems(person.keywords)
-        .forEach(item => {
-          themes.add(item.toLowerCase());
-        });
+      canonicalThemes(person)
+        .forEach(item => themes.add(item));
 
-      splitItems(person.external_organisations)
-        .forEach(item => {
-          organisations.add(item.toLowerCase());
-        });
+      canonicalOrganisations(person)
+        .forEach(item => organisations.add(item));
 
     });
 
@@ -934,7 +1010,7 @@
       });
 
       if (mode !== "organisations") {
-        splitItems(person.keywords).forEach(theme => {
+        canonicalThemes(person).forEach(theme => {
 
           const themeId =
             "theme_" +
@@ -957,7 +1033,7 @@
       }
 
       if (mode !== "themes") {
-        splitItems(person.external_organisations).forEach(org => {
+        canonicalOrganisations(person).forEach(org => {
 
           const orgId =
             "org_" +
@@ -1014,7 +1090,7 @@
         personId: String(p.id)
       });
 
-      splitItems(p.keywords).forEach(theme => {
+      canonicalThemes(p).forEach(theme => {
 
         const themeId =
           "suggest_theme_" +
@@ -1034,7 +1110,7 @@
         });
       });
 
-      splitItems(p.external_organisations).forEach(org => {
+      canonicalOrganisations(p).forEach(org => {
 
         const orgId =
           "suggest_org_" +
