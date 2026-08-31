@@ -71,7 +71,7 @@
 
     .controls {
       display: grid;
-      grid-template-columns: 2fr 1fr;
+      grid-template-columns: 2fr 1fr 1fr;
       gap: 18px;
       margin-bottom: 22px;
     }
@@ -326,6 +326,17 @@
           placeholder="e.g. ethics, VR, heritage"
         >
       </div>
+      <div class="control-box">
+        <label>Connection view</label>
+        <select id="connectionView">
+          <option value="all">All connections</option>
+          <option value="selected">Selected colleague only</option>
+          <option value="suggested">Suggested connections</option>
+          <option value="themes">Themes only</option>
+          <option value="organisations">Organisations only</option>
+        </select>
+      </div>
+
     </div>
 
     <div class="main-grid">
@@ -393,6 +404,7 @@
 
   let facultyData = [];
   let network = null;
+  let selectedPerson = null;
 
 
   function splitItems(value) {
@@ -622,7 +634,7 @@
 
     updateStatistics();
     populateDropdown(facultyData);
-    drawFullNetwork(facultyData);
+    applyConnectionView();
   }
 
 
@@ -874,8 +886,10 @@
     }
 
     select.value = String(person.id);
+    selectedPerson = person;
+
     showProfile(person);
-    drawPersonNetwork(person);
+    applyConnectionView();
 
     document.querySelector(".main-grid").scrollIntoView({
       behavior: "smooth",
@@ -884,14 +898,13 @@
   }
 
 
-  function drawFullNetwork(list) {
+  function drawFullNetwork(list, mode = "all") {
 
     const nodes = [];
     const edges = [];
     const nodeIds = new Set();
 
     function addNode(node) {
-
       if (!nodeIds.has(node.id)) {
         nodeIds.add(node.id);
         nodes.push(node);
@@ -900,24 +913,23 @@
 
     list.forEach(person => {
 
-      const staffId =
-        `staff_${person.id}`;
+      const staffId = `staff_${person.id}`;
 
       addNode({
         id: staffId,
         label: person.name || "Unnamed",
         group: "staff",
         shape: "dot",
-        size: 17
+        size: 17,
+        personId: String(person.id)
       });
 
-      splitItems(person.keywords)
-        .forEach(theme => {
+      if (mode !== "organisations") {
+        splitItems(person.keywords).forEach(theme => {
 
           const themeId =
             "theme_" +
-            theme.toLowerCase()
-              .replace(/[^a-z0-9]+/g, "_");
+            theme.toLowerCase().replace(/[^a-z0-9]+/g, "_");
 
           addNode({
             id: themeId,
@@ -931,16 +943,15 @@
             from: staffId,
             to: themeId
           });
-
         });
+      }
 
-      splitItems(person.external_organisations)
-        .forEach(org => {
+      if (mode !== "themes") {
+        splitItems(person.external_organisations).forEach(org => {
 
           const orgId =
             "org_" +
-            org.toLowerCase()
-              .replace(/[^a-z0-9]+/g, "_");
+            org.toLowerCase().replace(/[^a-z0-9]+/g, "_");
 
           addNode({
             id: orgId,
@@ -954,12 +965,151 @@
             from: staffId,
             to: orgId
           });
-
         });
-
+      }
     });
 
     renderNetwork(nodes, edges);
+  }
+
+
+  function drawSuggestedNetwork(person) {
+
+    const suggestions = getSuggestedConnections(person);
+    const people = [person, ...suggestions.map(item => item.person)];
+
+    const nodes = [];
+    const edges = [];
+    const nodeIds = new Set();
+
+    function addNode(node) {
+      if (!nodeIds.has(node.id)) {
+        nodeIds.add(node.id);
+        nodes.push(node);
+      }
+    }
+
+    people.forEach(p => {
+
+      const staffId = `suggest_staff_${p.id}`;
+
+      addNode({
+        id: staffId,
+        label: p.name || "Unnamed",
+        group: "staff",
+        shape: "dot",
+        size: String(p.id) === String(person.id) ? 27 : 18,
+        personId: String(p.id)
+      });
+
+      splitItems(p.keywords).forEach(theme => {
+
+        const themeId =
+          "suggest_theme_" +
+          theme.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+
+        addNode({
+          id: themeId,
+          label: theme,
+          group: "theme",
+          shape: "dot",
+          size: 11
+        });
+
+        edges.push({
+          from: staffId,
+          to: themeId
+        });
+      });
+
+      splitItems(p.external_organisations).forEach(org => {
+
+        const orgId =
+          "suggest_org_" +
+          org.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+
+        addNode({
+          id: orgId,
+          label: org,
+          group: "organisation",
+          shape: "dot",
+          size: 11
+        });
+
+        edges.push({
+          from: staffId,
+          to: orgId
+        });
+      });
+    });
+
+    renderNetwork(nodes, edges);
+  }
+
+
+  function getFilteredFaculty() {
+
+    const query =
+      document.getElementById("searchBox")
+        .value
+        .trim()
+        .toLowerCase();
+
+    if (!query) {
+      return facultyData;
+    }
+
+    return facultyData.filter(person => {
+
+      const text = `
+        ${person.name || ""}
+        ${person.department || ""}
+        ${person.research_groups || ""}
+        ${person.keywords || ""}
+        ${person.ai_research || ""}
+        ${person.future_directions || ""}
+        ${person.external_organisations || ""}
+      `.toLowerCase();
+
+      return text.includes(query);
+    });
+  }
+
+
+  function applyConnectionView() {
+
+    const mode =
+      document.getElementById("connectionView").value;
+
+    if (mode === "selected") {
+      if (selectedPerson) {
+        drawPersonNetwork(selectedPerson);
+      } else {
+        drawFullNetwork(getFilteredFaculty());
+      }
+      return;
+    }
+
+    if (mode === "suggested") {
+      if (selectedPerson) {
+        drawSuggestedNetwork(selectedPerson);
+      } else {
+        drawFullNetwork(getFilteredFaculty());
+      }
+      return;
+    }
+
+    if (mode === "themes") {
+      drawFullNetwork(getFilteredFaculty(), "themes");
+      return;
+    }
+
+    if (mode === "organisations") {
+      drawFullNetwork(getFilteredFaculty(), "organisations");
+      return;
+    }
+
+    drawFullNetwork(getFilteredFaculty(), "all");
   }
 
 
@@ -1105,6 +1255,22 @@
         graphData,
         options
       );
+
+    network.on("click", function(params) {
+
+      if (!params.nodes || !params.nodes.length) {
+        return;
+      }
+
+      const node =
+        graphData.nodes.get(
+          params.nodes[0]
+        );
+
+      if (node && node.personId) {
+        openColleague(node.personId);
+      }
+    });
   }
 
 
@@ -1114,14 +1280,15 @@
 
       if (!this.value) {
 
+        selectedPerson = null;
+
         document.getElementById("profile").innerHTML = `
           <div class="placeholder">
             Select a colleague to view their profile.
           </div>
         `;
 
-        drawFullNetwork(facultyData);
-
+        applyConnectionView();
         return;
       }
 
@@ -1136,8 +1303,9 @@
         return;
       }
 
+      selectedPerson = person;
       showProfile(person);
-      drawPersonNetwork(person);
+      applyConnectionView();
     });
 
 
@@ -1145,35 +1313,33 @@
     .getElementById("searchBox")
     .addEventListener("input", function() {
 
-      const query =
-        this.value
-          .trim()
-          .toLowerCase();
-
-      if (!query) {
-        populateDropdown(facultyData);
-        drawFullNetwork(facultyData);
-        return;
-      }
-
-      const filtered =
-        facultyData.filter(person => {
-
-          const text = `
-            ${person.name || ""}
-            ${person.department || ""}
-            ${person.research_groups || ""}
-            ${person.keywords || ""}
-            ${person.ai_research || ""}
-            ${person.future_directions || ""}
-            ${person.external_organisations || ""}
-          `.toLowerCase();
-
-          return text.includes(query);
-        });
+      const filtered = getFilteredFaculty();
 
       populateDropdown(filtered);
-      drawFullNetwork(filtered);
+
+      if (
+        selectedPerson &&
+        filtered.some(
+          person =>
+            String(person.id) ===
+            String(selectedPerson.id)
+        )
+      ) {
+        document.getElementById("facultySelect").value =
+          String(selectedPerson.id);
+      } else if (this.value.trim()) {
+        document.getElementById("facultySelect").value = "";
+      }
+
+      applyConnectionView();
+    });
+
+
+  document
+    .getElementById("connectionView")
+    .addEventListener("change", function() {
+
+      applyConnectionView();
     });
 
 
