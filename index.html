@@ -418,7 +418,7 @@
     }
 
     return String(value)
-      .split(/[,;\\n]/)
+      .split(/[,;\n]/)
       .map(item => item.trim())
       .filter(Boolean);
   }
@@ -505,6 +505,17 @@
 
   function canonicalOrganisations(person) {
     return canonicalFromTaxonomy(person, ORGANISATION_TAXONOMY);
+  }
+
+
+
+  function splitResearchGroups(value) {
+    if (!value) return [];
+
+    return String(value)
+      .split(/[;\n]/)
+      .map(item => item.trim())
+      .filter(Boolean);
   }
 
 
@@ -793,6 +804,27 @@
       <div class="tags">
         ${items.map(item => `
           <span class="tag ${organisation ? "org-tag" : ""}">
+            ${escapeHTML(item)}
+          </span>
+        `).join("")}
+      </div>
+    `;
+  }
+
+
+
+  function makeResearchGroupTags(value) {
+
+    const items = splitResearchGroups(value);
+
+    if (!items.length) {
+      return "<span>Not provided</span>";
+    }
+
+    return `
+      <div class="tags">
+        ${items.map(item => `
+          <span class="tag">
             ${escapeHTML(item)}
           </span>
         `).join("")}
