@@ -491,6 +491,11 @@
       font-weight: bold;
     }
 
+    .submit-button:disabled {
+      opacity: 0.6;
+      cursor: not-allowed;
+    }
+
     .form-message {
       margin-top: 14px;
       font-size: 14px;
@@ -1890,25 +1895,27 @@
   facultyForm.addEventListener("submit", async function(event) {
     event.preventDefault();
 
+    const submitButton = facultyForm.querySelector(".submit-button");
     const formData = new FormData(facultyForm);
-
     const consent = formData.get("consent");
 
-    if (!consent) {
-      facultyFormMessage.textContent = "Please select a consent option.";
+    if (consent !== "I consent to my data being used for the stated purposes") {
+      facultyFormMessage.textContent =
+        "Submission was not sent because consent was not provided.";
       facultyFormMessage.className = "form-message error";
       return;
     }
 
     const keywordText = String(formData.get("keywords") || "");
-    const keywordCount = keywordText
+
+    const keywords = keywordText
       .split(",")
       .map(item => item.trim())
-      .filter(Boolean)
-      .length;
+      .filter(Boolean);
 
-    if (keywordCount > 5) {
-      facultyFormMessage.textContent = "Please provide no more than five keywords.";
+    if (keywords.length > 5) {
+      facultyFormMessage.textContent =
+        "Please provide no more than five keywords.";
       facultyFormMessage.className = "form-message error";
       return;
     }
@@ -1916,7 +1923,6 @@
     const now = new Date().toISOString();
 
     const payload = {
-      id: nextFacultyId(),
       start_time: now,
       completion_time: now,
       email: formData.get("email") || null,
@@ -1924,7 +1930,7 @@
       last_modified_time: now,
       department: formData.get("department") || null,
       research_groups: formData.get("research_groups") || null,
-      keywords: formData.get("keywords") || null,
+      keywords: keywords.join(", "),
       showcase_interest: formData.get("showcase_interest") || null,
       ai_research: formData.get("ai_research") || null,
       enterprise_projects: formData.get("enterprise_projects") || null,
@@ -1935,46 +1941,60 @@
       consent: consent
     };
 
+    submitButton.disabled = true;
+    submitButton.textContent = "Submitting...";
+
     facultyFormMessage.textContent = "Submitting...";
     facultyFormMessage.className = "form-message";
 
-    const { data, error } = await db
-      .from("ai_faculty_data")
-      .insert(payload)
-      .select();
+    try {
+      const { data, error } = await db
+        .from("ai_faculty_data")
+        .insert(payload)
+        .select();
 
-    if (error) {
+      if (error) {
+        throw error;
+      }
+
+      const inserted =
+        Array.isArray(data) && data.length
+          ? data[0]
+          : null;
+
+      facultyFormMessage.textContent =
+        "Submitted successfully.";
+      facultyFormMessage.className =
+        "form-message success";
+
+      facultyForm.reset();
+
+      await loadData();
+
+      if (inserted && inserted.id !== undefined) {
+        setTimeout(() => {
+          closeFacultyModal();
+          openColleague(inserted.id);
+        }, 600);
+      } else {
+        setTimeout(closeFacultyModal, 600);
+      }
+
+    } catch (error) {
       console.error(error);
 
       facultyFormMessage.textContent =
-        "Could not submit data: " + error.message;
+        "Could not submit data: " +
+        (error.message || "Unknown error");
 
-      facultyFormMessage.className = "form-message error";
-      return;
-    }
+      facultyFormMessage.className =
+        "form-message error";
 
-    facultyFormMessage.textContent =
-      "Submitted successfully.";
-
-    facultyFormMessage.className =
-      "form-message success";
-
-    facultyForm.reset();
-
-    await loadData();
-
-    const inserted = Array.isArray(data) ? data[0] : null;
-
-    if (inserted && inserted.id !== undefined) {
-      setTimeout(() => {
-        closeFacultyModal();
-        openColleague(inserted.id);
-      }, 500);
-    } else {
-      setTimeout(closeFacultyModal, 500);
+    } finally {
+      submitButton.disabled = false;
+      submitButton.textContent = "Submit";
     }
   });
-
 
   loadData();
 
