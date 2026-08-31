@@ -412,6 +412,58 @@
       }
     }
 
+
+    /* Fix radio-button layout: override the global input width rule */
+    .radio-row input[type="radio"] {
+      width: auto;
+      min-width: 18px;
+      height: 18px;
+      margin: 0;
+      flex: 0 0 auto;
+    }
+
+    .radio-row.inline-options {
+      display: flex;
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 12px 28px;
+      align-items: flex-start;
+    }
+
+    .radio-row.inline-options label {
+      width: auto;
+      max-width: 100%;
+      display: inline-flex;
+      align-items: flex-start;
+      gap: 8px;
+      margin: 0;
+      line-height: 1.4;
+      white-space: normal;
+    }
+
+    /* Keep Q4 compact */
+    .radio-row.inline-options label:has(input[name="showcase_interest"]) {
+      flex: 0 0 auto;
+    }
+
+    /* Let long consent text wrap naturally instead of becoming a narrow column */
+    .radio-row.inline-options label:has(input[name="consent"]) {
+      flex: 1 1 320px;
+      min-width: 280px;
+    }
+
+    @media (max-width: 700px) {
+      .radio-row.inline-options {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .radio-row.inline-options label:has(input[name="consent"]) {
+        min-width: 0;
+        width: 100%;
+      }
+    }
+
     .form-actions {
       display: flex;
       justify-content: flex-end;
