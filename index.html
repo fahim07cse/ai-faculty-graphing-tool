@@ -115,7 +115,7 @@
 
     #network {
       width: 100%;
-      height: 650px;
+      height: 720px;
       background: white;
     }
 
@@ -417,6 +417,14 @@
       .split(/[,;\\n]/)
       .map(item => item.trim())
       .filter(Boolean);
+  }
+
+
+
+  function shortLabel(value, maxLength = 30) {
+    const text = String(value || "").trim();
+    if (text.length <= maxLength) return text;
+    return text.slice(0, maxLength - 1).trimEnd() + "…";
   }
 
 
@@ -917,8 +925,9 @@
 
       addNode({
         id: staffId,
-        label: person.name || "Unnamed",
+        label: shortLabel(person.name || "Unnamed", 24),
         group: "staff",
+        title: person.name || "Unnamed",
         shape: "dot",
         size: 17,
         personId: String(person.id)
@@ -933,8 +942,9 @@
 
           addNode({
             id: themeId,
-            label: theme,
+            label: shortLabel(theme, 28),
             group: "theme",
+            title: theme,
             shape: "dot",
             size: 11
           });
@@ -955,8 +965,9 @@
 
           addNode({
             id: orgId,
-            label: org,
+            label: shortLabel(org, 28),
             group: "organisation",
+            title: org,
             shape: "dot",
             size: 11
           });
@@ -995,8 +1006,9 @@
 
       addNode({
         id: staffId,
-        label: p.name || "Unnamed",
+        label: shortLabel(p.name || "Unnamed", 24),
         group: "staff",
+        title: p.name || "Unnamed",
         shape: "dot",
         size: String(p.id) === String(person.id) ? 27 : 18,
         personId: String(p.id)
@@ -1010,7 +1022,7 @@
 
         addNode({
           id: themeId,
-          label: theme,
+          label: shortLabel(theme, 28),
           group: "theme",
           shape: "dot",
           size: 11
@@ -1030,7 +1042,7 @@
 
         addNode({
           id: orgId,
-          label: org,
+          label: shortLabel(org, 28),
           group: "organisation",
           shape: "dot",
           size: 11
@@ -1125,6 +1137,7 @@
       id: staffId,
       label: person.name || "Staff",
       group: "staff",
+      title: person.name || "Staff",
       shape: "dot",
       size: 28
     });
@@ -1137,7 +1150,7 @@
 
         nodes.push({
           id: id,
-          label: theme,
+          label: shortLabel(theme, 28),
           group: "theme",
           shape: "dot",
           size: 15
@@ -1158,7 +1171,7 @@
 
         nodes.push({
           id: id,
-          label: org,
+          label: shortLabel(org, 28),
           group: "organisation",
           shape: "dot",
           size: 15
@@ -1255,6 +1268,15 @@
         graphData,
         options
       );
+
+    network.once("stabilizationIterationsDone", function() {
+      network.fit({
+        animation: {
+          duration: 450,
+          easingFunction: "easeInOutQuad"
+        }
+      });
+    });
 
     network.on("click", function(params) {
 
