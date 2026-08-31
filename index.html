@@ -265,6 +265,170 @@
       font-size: 13px;
     }
 
+
+    .top-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin: 0 0 18px;
+    }
+
+    .add-button {
+      border: 0;
+      background: #1756a9;
+      color: white;
+      padding: 11px 16px;
+      border-radius: 9px;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    .add-button:hover {
+      filter: brightness(0.95);
+    }
+
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.48);
+      z-index: 9999;
+      padding: 24px;
+      overflow-y: auto;
+    }
+
+    .modal.open {
+      display: block;
+    }
+
+    .modal-panel {
+      max-width: 900px;
+      margin: 20px auto;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 18px 22px;
+      border-bottom: 1px solid #e2e8f0;
+      background: #f8fafc;
+    }
+
+    .modal-header h2 {
+      margin: 0;
+      font-size: 22px;
+    }
+
+    .close-button {
+      border: 0;
+      background: transparent;
+      font-size: 28px;
+      cursor: pointer;
+      line-height: 1;
+      color: #475569;
+    }
+
+    .form-body {
+      padding: 22px;
+    }
+
+    .form-section {
+      margin-bottom: 26px;
+    }
+
+    .form-section h3 {
+      margin: 0 0 12px;
+      font-size: 18px;
+    }
+
+    .field {
+      margin-bottom: 16px;
+    }
+
+    .field label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 7px;
+      line-height: 1.35;
+    }
+
+    .field input[type="text"],
+    .field input[type="email"],
+    .field textarea,
+    .field select {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #cbd5e1;
+      border-radius: 8px;
+      font-size: 15px;
+      font-family: inherit;
+      background: white;
+    }
+
+    .field textarea {
+      min-height: 110px;
+      resize: vertical;
+    }
+
+    .radio-row {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .radio-row label {
+      font-weight: normal;
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .form-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      margin-top: 22px;
+    }
+
+    .secondary-button,
+    .submit-button {
+      padding: 10px 16px;
+      border-radius: 8px;
+      font-size: 15px;
+      cursor: pointer;
+    }
+
+    .secondary-button {
+      border: 1px solid #cbd5e1;
+      background: white;
+    }
+
+    .submit-button {
+      border: 0;
+      background: #1756a9;
+      color: white;
+      font-weight: bold;
+    }
+
+    .form-message {
+      margin-top: 14px;
+      font-size: 14px;
+    }
+
+    .form-message.success {
+      color: #166534;
+    }
+
+    .form-message.error {
+      color: #b91c1c;
+    }
+
     @media (max-width: 850px) {
       .stats,
       .controls,
@@ -290,6 +454,12 @@
   </div>
 
   <div class="container">
+
+    <div class="top-actions">
+      <button id="openFacultyForm" class="add-button" type="button">
+        + Add Faculty Data
+      </button>
+    </div>
 
     <div class="stats">
       <div class="stat">
@@ -393,6 +563,133 @@
 
   </div>
 
+  <div id="facultyModal" class="modal" aria-hidden="true">
+    <div class="modal-panel">
+      <div class="modal-header">
+        <h2>AI @ Faculty of Arts and Humanities</h2>
+        <button id="closeFacultyForm" class="close-button" type="button" aria-label="Close">&times;</button>
+      </div>
+
+      <form id="facultyForm" class="form-body">
+        <div class="form-section">
+          <h3>About You</h3>
+
+          <div class="field">
+            <label for="formName">Name *</label>
+            <input id="formName" name="name" type="text" required>
+          </div>
+
+          <div class="field">
+            <label for="formEmail">Email</label>
+            <input id="formEmail" name="email" type="email">
+          </div>
+
+          <div class="field">
+            <label for="formDepartment">1. Department / Academic Unit *</label>
+            <input id="formDepartment" name="department" type="text" required>
+          </div>
+
+          <div class="field">
+            <label for="formResearchGroups">
+              2. Research Groups, Units or Project Affiliations (please include web links if available)
+            </label>
+            <textarea id="formResearchGroups" name="research_groups"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="formKeywords">
+              3. Keywords: Please list up to five keywords that describe your AI-related work (separate words or phrases by comma) *
+            </label>
+            <textarea id="formKeywords" name="keywords" required></textarea>
+          </div>
+
+          <div class="field">
+            <label>4. Would you be interested to have your work showcased via Faculty comms and/or AI@Southampton?</label>
+            <div class="radio-row">
+              <label><input type="radio" name="showcase_interest" value="Yes, please contact me"> Yes, please contact me</label>
+              <label><input type="radio" name="showcase_interest" value="No"> No</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Research, Scholarship, Enterprise</h3>
+
+          <div class="field">
+            <label for="formAiResearch">
+              5. Describe aspects of your research/scholarship as pertaining to AI (directly or indirectly). Include any key themes, methods, or case studies you are exploring.
+            </label>
+            <textarea id="formAiResearch" name="ai_research"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="formEnterprise">
+              6. Describe enterprise, knowledge exchange, consultancy, or public-facing projects you are involved in relating to AI
+            </label>
+            <textarea id="formEnterprise" name="enterprise_projects"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="formFuture">
+              7. What future directions or funding areas would you like to pursue?
+            </label>
+            <textarea id="formFuture" name="future_directions"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="formExternal">
+              8. List external organisations, industries, or communities you are working with or would like to work with. Comment on how the Faculty might best support or coordinate these engagements
+            </label>
+            <textarea id="formExternal" name="external_organisations"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="formSupport">
+              9. What kinds of support and/or training would help you develop your AI-related work? Include any particular ethical, legal, or technical issues you think the Faculty should address – where possible, provide suggestions for how the Faculty can develop its approach.
+            </label>
+            <textarea id="formSupport" name="support_training"></textarea>
+          </div>
+
+          <div class="field">
+            <label for="formComments">
+              10. Comment on anything else you’d like to share about your work with AI or your thoughts on Faculty-level coordination
+            </label>
+            <textarea id="formComments" name="additional_comments"></textarea>
+          </div>
+        </div>
+
+        <div class="form-section">
+          <h3>Consent</h3>
+
+          <div class="field">
+            <label>
+              11. I understand that my responses will be stored securely and used for internal research-mapping and strategic purposes within the Faculty. Any reporting will anonymise individual contributions unless I am contacted for permission. Where clear opportunities or shared interests emerge, colleagues may be contacted directly to help connect related work and foster collaboration.
+            </label>
+
+            <div class="radio-row">
+              <label>
+                <input type="radio" name="consent" value="I consent to my data being used for the stated purposes" required>
+                I consent to my data being used for the stated purposes
+              </label>
+
+              <label>
+                <input type="radio" name="consent" value="I do not consent to my data being used for the stated purposes" required>
+                I do not consent to my data being used for the stated purposes
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div id="facultyFormMessage" class="form-message"></div>
+
+        <div class="form-actions">
+          <button id="cancelFacultyForm" class="secondary-button" type="button">Cancel</button>
+          <button class="submit-button" type="submit">Submit</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
 <script>
 
   const SUPABASE_URL =
@@ -408,6 +705,14 @@
 
   let facultyData = [];
   let network = null;
+
+  function nextFacultyId() {
+    const ids = facultyData
+      .map(person => Number(person.id))
+      .filter(Number.isFinite);
+
+    return ids.length ? Math.max(...ids) + 1 : 1;
+  }
   let selectedPerson = null;
 
 
@@ -1477,6 +1782,122 @@
     const card = event.target.closest(".suggestion[data-id]");
     if (!card) return;
     openColleague(card.dataset.id);
+  });
+
+
+
+  const facultyModal = document.getElementById("facultyModal");
+  const facultyForm = document.getElementById("facultyForm");
+  const facultyFormMessage = document.getElementById("facultyFormMessage");
+
+  function openFacultyModal() {
+    facultyModal.classList.add("open");
+    facultyModal.setAttribute("aria-hidden", "false");
+    facultyFormMessage.textContent = "";
+    facultyFormMessage.className = "form-message";
+  }
+
+  function closeFacultyModal() {
+    facultyModal.classList.remove("open");
+    facultyModal.setAttribute("aria-hidden", "true");
+  }
+
+  document.getElementById("openFacultyForm").addEventListener("click", openFacultyModal);
+  document.getElementById("closeFacultyForm").addEventListener("click", closeFacultyModal);
+  document.getElementById("cancelFacultyForm").addEventListener("click", closeFacultyModal);
+
+  facultyModal.addEventListener("click", function(event) {
+    if (event.target === facultyModal) {
+      closeFacultyModal();
+    }
+  });
+
+  facultyForm.addEventListener("submit", async function(event) {
+    event.preventDefault();
+
+    const formData = new FormData(facultyForm);
+
+    const consent = formData.get("consent");
+
+    if (!consent) {
+      facultyFormMessage.textContent = "Please select a consent option.";
+      facultyFormMessage.className = "form-message error";
+      return;
+    }
+
+    const keywordText = String(formData.get("keywords") || "");
+    const keywordCount = keywordText
+      .split(",")
+      .map(item => item.trim())
+      .filter(Boolean)
+      .length;
+
+    if (keywordCount > 5) {
+      facultyFormMessage.textContent = "Please provide no more than five keywords.";
+      facultyFormMessage.className = "form-message error";
+      return;
+    }
+
+    const now = new Date().toISOString();
+
+    const payload = {
+      id: nextFacultyId(),
+      start_time: now,
+      completion_time: now,
+      email: formData.get("email") || null,
+      name: formData.get("name") || null,
+      last_modified_time: now,
+      department: formData.get("department") || null,
+      research_groups: formData.get("research_groups") || null,
+      keywords: formData.get("keywords") || null,
+      showcase_interest: formData.get("showcase_interest") || null,
+      ai_research: formData.get("ai_research") || null,
+      enterprise_projects: formData.get("enterprise_projects") || null,
+      future_directions: formData.get("future_directions") || null,
+      external_organisations: formData.get("external_organisations") || null,
+      support_training: formData.get("support_training") || null,
+      additional_comments: formData.get("additional_comments") || null,
+      consent: consent
+    };
+
+    facultyFormMessage.textContent = "Submitting...";
+    facultyFormMessage.className = "form-message";
+
+    const { data, error } = await db
+      .from("ai_faculty_data")
+      .insert(payload)
+      .select();
+
+    if (error) {
+      console.error(error);
+
+      facultyFormMessage.textContent =
+        "Could not submit data: " + error.message;
+
+      facultyFormMessage.className = "form-message error";
+      return;
+    }
+
+    facultyFormMessage.textContent =
+      "Submitted successfully.";
+
+    facultyFormMessage.className =
+      "form-message success";
+
+    facultyForm.reset();
+
+    await loadData();
+
+    const inserted = Array.isArray(data) ? data[0] : null;
+
+    if (inserted && inserted.id !== undefined) {
+      setTimeout(() => {
+        closeFacultyModal();
+        openColleague(inserted.id);
+      }, 500);
+    } else {
+      setTimeout(closeFacultyModal, 500);
+    }
   });
 
 
