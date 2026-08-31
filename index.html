@@ -1,1 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AI Faculty Explorer</title>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background: #f5f7fb;
+      color: #222;
+    }
+
+    header {
+      background: white;
+      padding: 20px 30px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    .container {
+      max-width: 1100px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .card {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    select {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      border-radius: 8px;
+      border: 1px solid #ccc;
+    }
+
+    .profile h2 {
+      margin-bottom: 5px;
+    }
+
+    .label {
+      font-weight: bold;
+      margin-top: 15px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 15px;
+      margin-bottom: 20px;
+    }
+
+    .stat {
+      background: white;
+      padding: 20px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+    }
+
+    .stat h2 {
+      margin: 0;
+      font-size: 28px;
+    }
+
+    @media (max-width: 700px) {
+      .stats {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+
+<body>
+
+<header>
+  <h1>AI Faculty Explorer</h1>
+  <p>Explore AI-related research, interests and connections.</p>
+</header>
+
+<div class="container">
+
+  <div class="stats">
+    <div class="stat">
+      <h2 id="staffCount">0</h2>
+      <p>Colleagues</p>
+    </div>
+
+    <div class="stat">
+      <h2 id="themeCount">0</h2>
+      <p>Research Themes</p>
+    </div>
+
+    <div class="stat">
+      <h2 id="orgCount">0</h2>
+      <p>External Organisations</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2>Choose a colleague</h2>
+    <select id="facultySelect">
+      <option value="">Select a colleague</option>
+    </select>
+  </div>
+
+  <div class="card profile" id="profileCard">
+    <h2>Faculty Profile</h2>
+    <p>Select a colleague to view their information.</p>
+  </div>
+
+</div>
+
+<script>
+  const supabaseUrl = "https://qmlguyfmipslinbaqcgh.supabase.co";
+  const supabaseKey = "sb_publishable_roPlnce2JAfGz_DXCy3fuA_8gc9ejVZ";
+
+  const supabaseClient = supabase.createClient(
+    supabaseUrl,
+    supabaseKey
+  );
+
+  let facultyData = [];
+
+  async function loadFacultyData() {
+
+    const { data, error } = await supabaseClient
+      .from("ai_faculty_data")
+      .select("*");
+
+    if (error) {
+      console.error(error);
+
+      document.getElementById("profileCard").innerHTML =
+        "<h2>Error</h2><p>Could not load data from Supabase.</p>";
+
+      return;
+    }
+
+    facultyData = data;
+
+    document.getElementById("staffCount").textContent =
+      facultyData.length;
+
+    populateFacultyDropdown();
+    calculateStats();
+  }
+
+  function populateFacultyDropdown() {
+
+    const select =
+      document.getElementById("facultySelect");
+
+    facultyData.forEach((person, index) => {
+
+      const option =
+        document.createElement("option");
+
+      option.value = index;
+
+      option.textContent =
+        person.name || "Unnamed colleague";
+
+      select.appendChild(option);
+    });
+  }
+
+  function calculateStats() {
+
+    const themes = new Set();
+    const organisations = new Set();
+
+    facultyData.forEach(person => {
+
+      if (person.keywords) {
+
+        person.keywords
+          .split(",")
+          .forEach(item => {
+
+            if (item.trim()) {
+              themes.add(item.trim());
+            }
+
+          });
+      }
+
+      if (person.external_organisations) {
+
+        person.external_organisations
+          .split(",")
+          .forEach(item => {
+
+            if (item.trim()) {
+              organisations.add(item.trim());
+            }
+
+          });
+      }
+
+    });
+
+    document.getElementById("themeCount").textContent =
+      themes.size;
+
+    document.getElementById("orgCount").textContent =
+      organisations.size;
+  }
+
+  document
+    .getElementById("facultySelect")
+    .addEventListener("change", function () {
+
+      if (this.value === "") {
+        return;
+      }
+
+      const person =
+        facultyData[this.value];
+
+      document.getElementById("profileCard").innerHTML = `
+        <h2>${person.name || "Unnamed colleague"}</h2>
+
+        <p>
+          <strong>Department:</strong>
+          ${person.department || "Not provided"}
+        </p>
+
+        <p class="label">
+          Research Groups
+        </p>
+
+        <p>
+          ${person.research_groups || "Not provided"}
+        </p>
+
+        <p class="label">
+          Keywords / Interests
+        </p>
+
+        <p>
+          ${person.keywords || "Not provided"}
+        </p>
+
+        <p class="label">
+          AI Research
+        </p>
+
+        <p>
+          ${person.ai_research || "Not provided"}
+        </p>
+
+        <p class="label">
+          Future Directions
+        </p>
+
+        <p>
+          ${person.future_directions || "Not provided"}
+        </p>
+
+        <p class="label">
+          External Organisations
+        </p>
+
+        <p>
+          ${person.external_organisations || "Not provided"}
+        </p>
+      `;
+    });
+
+  loadFacultyData();
+</script>
+
+</body>
+</html>
