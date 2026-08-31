@@ -375,6 +375,17 @@
       resize: vertical;
     }
 
+    .field input:invalid:not(:placeholder-shown) {
+      border-color: #b91c1c;
+      background: #fff7f7;
+    }
+
+    .email-help {
+      margin-top: 6px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
     .radio-row {
       display: flex;
       flex-direction: column;
@@ -661,7 +672,17 @@
 
           <div class="field">
             <label for="formEmail">Email</label>
-            <input id="formEmail" name="email" type="email">
+            <input
+              id="formEmail"
+              name="email"
+              type="email"
+              placeholder="name@soton.ac.uk"
+              pattern="^[A-Za-z0-9._%+-]+@soton\.ac\.uk$"
+              title="Please enter a valid University of Southampton email ending in @soton.ac.uk"
+            >
+            <div class="email-help">
+              Please use your University of Southampton email address ending in @soton.ac.uk.
+            </div>
           </div>
 
           <div class="field">
@@ -1899,6 +1920,19 @@
     const formData = new FormData(facultyForm);
     const consent = formData.get("consent");
 
+    const email = String(formData.get("email") || "").trim();
+    const sotonEmailPattern = /^[A-Za-z0-9._%+-]+@soton\.ac\.uk$/i;
+
+    if (!email || !sotonEmailPattern.test(email)) {
+      facultyFormMessage.textContent =
+        "Invalid email. Please enter a valid University of Southampton email ending in @soton.ac.uk.";
+      facultyFormMessage.className = "form-message error";
+
+      const emailInput = document.getElementById("formEmail");
+      emailInput.focus();
+      return;
+    }
+
     if (consent !== "I consent to my data being used for the stated purposes") {
       facultyFormMessage.textContent =
         "Submission was not sent because consent was not provided.";
@@ -1925,7 +1959,7 @@
     const payload = {
       start_time: now,
       completion_time: now,
-      email: formData.get("email") || null,
+      email: email,
       name: formData.get("name") || null,
       last_modified_time: now,
       department: formData.get("department") || null,
