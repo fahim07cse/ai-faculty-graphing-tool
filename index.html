@@ -125,7 +125,8 @@
     #network {
       width: 100%;
       height: 700px;
-      background: white;
+      background:
+        radial-gradient(circle at 50% 45%, #ffffff 0%, #fbfdff 58%, #f7faff 100%);
     }
 
     .legend {
@@ -1439,6 +1440,115 @@
   }
 
 
+
+  function graphNodeKey(prefix, value) {
+    return (
+      prefix +
+      String(value || "")
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, "_")
+        .replace(/^_+|_+$/g, "")
+    );
+  }
+
+
+  function buildDegreeMap(edges) {
+    const degree = new Map();
+
+    edges.forEach(edge => {
+      degree.set(
+        edge.from,
+        (degree.get(edge.from) || 0) + 1
+      );
+
+      degree.set(
+        edge.to,
+        (degree.get(edge.to) || 0) + 1
+      );
+    });
+
+    return degree;
+  }
+
+
+  function applyProfessionalNodeSizing(nodes, edges) {
+    const degree = buildDegreeMap(edges);
+
+    return nodes.map(node => {
+      const connections =
+        degree.get(node.id) || 0;
+
+      let size = 10;
+
+      if (node.group === "staff") {
+        size =
+          14 +
+          Math.min(connections, 12) * 0.55;
+
+        if (
+          selectedPerson &&
+          node.personId &&
+          String(node.personId) ===
+          String(selectedPerson.id)
+        ) {
+          size += 4;
+        }
+
+        size = Math.min(size, 22);
+      }
+
+      if (node.group === "theme") {
+        size =
+          8.5 +
+          Math.min(connections, 12) * 0.32;
+
+        size = Math.min(size, 13);
+      }
+
+      if (node.group === "organisation") {
+        size =
+          8 +
+          Math.min(connections, 12) * 0.30;
+
+        size = Math.min(size, 12.5);
+      }
+
+      return {
+        ...node,
+        size: size
+      };
+    });
+  }
+
+
+  function makeGraphEdge(from, to, type = "theme") {
+    return {
+      from: from,
+      to: to,
+      relationType: type,
+      width: 0.9,
+      color: {
+        color:
+          type === "organisation"
+            ? "#c3d7d5"
+            : "#ccd6e5",
+        highlight: "#6b7f9d",
+        hover: "#8597b2",
+        opacity: 0.78
+      },
+      dashes:
+        type === "organisation"
+          ? [4, 5]
+          : false,
+      smooth: {
+        enabled: true,
+        type: "dynamic",
+        roundness: 0.18
+      }
+    };
+  }
+
+
   function drawFullNetwork(list, mode = "all") {
 
     const nodes = [];
@@ -1454,73 +1564,114 @@
 
     list.forEach(person => {
 
-      const staffId = `staff_${person.id}`;
+      const staffId =
+        `staff_${person.id}`;
 
       addNode({
         id: staffId,
-        label: shortLabel(person.name || "Unnamed", 24),
+        label:
+          shortLabel(
+            person.name || "Unnamed",
+            25
+          ),
         group: "staff",
-        title: person.name || "Unnamed",
+        title:
+          person.name || "Unnamed",
         shape: "dot",
-        size: 17,
-        personId: String(person.id)
+        personId:
+          String(person.id)
       });
 
-      if (mode !== "organisations") {
-        canonicalThemes(person).forEach(theme => {
+      if (
+        mode !== "organisations"
+      ) {
+        canonicalThemes(person)
+          .forEach(theme => {
 
-          const themeId =
-            "theme_" +
-            theme.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+            const themeId =
+              graphNodeKey(
+                "theme_",
+                theme
+              );
 
-          addNode({
-            id: themeId,
-            label: shortLabel(theme, 28),
-            group: "theme",
-            title: theme,
-            shape: "dot",
-            size: 11
+            addNode({
+              id: themeId,
+              label:
+                shortLabel(
+                  theme,
+                  30
+                ),
+              group: "theme",
+              title: theme,
+              shape: "dot"
+            });
+
+            edges.push(
+              makeGraphEdge(
+                staffId,
+                themeId,
+                "theme"
+              )
+            );
           });
-
-          edges.push({
-            from: staffId,
-            to: themeId
-          });
-        });
       }
 
-      if (mode !== "themes") {
-        canonicalOrganisations(person).forEach(org => {
+      if (
+        mode !== "themes"
+      ) {
+        canonicalOrganisations(person)
+          .forEach(org => {
 
-          const orgId =
-            "org_" +
-            org.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+            const orgId =
+              graphNodeKey(
+                "org_",
+                org
+              );
 
-          addNode({
-            id: orgId,
-            label: shortLabel(org, 28),
-            group: "organisation",
-            title: org,
-            shape: "dot",
-            size: 11
+            addNode({
+              id: orgId,
+              label:
+                shortLabel(
+                  org,
+                  30
+                ),
+              group: "organisation",
+              title: org,
+              shape: "dot"
+            });
+
+            edges.push(
+              makeGraphEdge(
+                staffId,
+                orgId,
+                "organisation"
+              )
+            );
           });
-
-          edges.push({
-            from: staffId,
-            to: orgId
-          });
-        });
       }
     });
 
-    renderNetwork(nodes, edges);
+    renderNetwork(
+      applyProfessionalNodeSizing(
+        nodes,
+        edges
+      ),
+      edges
+    );
   }
 
 
   function drawSuggestedNetwork(person) {
 
-    const suggestions = getSuggestedConnections(person);
-    const people = [person, ...suggestions.map(item => item.person)];
+    const suggestions =
+      getSuggestedConnections(person);
+
+    const people = [
+      person,
+      ...suggestions.map(
+        item => item.person
+      )
+    ];
 
     const nodes = [];
     const edges = [];
@@ -1535,60 +1686,93 @@
 
     people.forEach(p => {
 
-      const staffId = `suggest_staff_${p.id}`;
+      const staffId =
+        `suggest_staff_${p.id}`;
 
       addNode({
         id: staffId,
-        label: shortLabel(p.name || "Unnamed", 24),
+        label:
+          shortLabel(
+            p.name || "Unnamed",
+            25
+          ),
         group: "staff",
-        title: p.name || "Unnamed",
+        title:
+          p.name || "Unnamed",
         shape: "dot",
-        size: String(p.id) === String(person.id) ? 27 : 18,
-        personId: String(p.id)
+        personId:
+          String(p.id)
       });
 
-      canonicalThemes(p).forEach(theme => {
+      canonicalThemes(p)
+        .forEach(theme => {
 
-        const themeId =
-          "suggest_theme_" +
-          theme.toLowerCase().replace(/[^a-z0-9]+/g, "_");
+          const themeId =
+            graphNodeKey(
+              "suggest_theme_",
+              theme
+            );
 
-        addNode({
-          id: themeId,
-          label: shortLabel(theme, 28),
-          group: "theme",
-          shape: "dot",
-          size: 11
+          addNode({
+            id: themeId,
+            label:
+              shortLabel(
+                theme,
+                30
+              ),
+            group: "theme",
+            title: theme,
+            shape: "dot"
+          });
+
+          edges.push(
+            makeGraphEdge(
+              staffId,
+              themeId,
+              "theme"
+            )
+          );
         });
 
-        edges.push({
-          from: staffId,
-          to: themeId
+      canonicalOrganisations(p)
+        .forEach(org => {
+
+          const orgId =
+            graphNodeKey(
+              "suggest_org_",
+              org
+            );
+
+          addNode({
+            id: orgId,
+            label:
+              shortLabel(
+                org,
+                30
+              ),
+            group:
+              "organisation",
+            title: org,
+            shape: "dot"
+          });
+
+          edges.push(
+            makeGraphEdge(
+              staffId,
+              orgId,
+              "organisation"
+            )
+          );
         });
-      });
-
-      canonicalOrganisations(p).forEach(org => {
-
-        const orgId =
-          "suggest_org_" +
-          org.toLowerCase().replace(/[^a-z0-9]+/g, "_");
-
-        addNode({
-          id: orgId,
-          label: shortLabel(org, 28),
-          group: "organisation",
-          shape: "dot",
-          size: 11
-        });
-
-        edges.push({
-          from: staffId,
-          to: orgId
-        });
-      });
     });
 
-    renderNetwork(nodes, edges);
+    renderNetwork(
+      applyProfessionalNodeSizing(
+        nodes,
+        edges
+      ),
+      edges
+    );
   }
 
 
@@ -1627,34 +1811,65 @@
       document.getElementById("connectionView").value;
 
     if (mode === "selected") {
+
       if (selectedPerson) {
-        drawPersonNetwork(selectedPerson);
+        drawPersonNetwork(
+          selectedPerson
+        );
       } else {
-        drawFullNetwork(getFilteredFaculty());
+        drawFullNetwork(
+          getFilteredFaculty()
+        );
       }
+
       return;
     }
+
 
     if (mode === "suggested") {
+
       if (selectedPerson) {
-        drawSuggestedNetwork(selectedPerson);
+        drawSuggestedNetwork(
+          selectedPerson
+        );
       } else {
-        drawFullNetwork(getFilteredFaculty());
+        drawFullNetwork(
+          getFilteredFaculty()
+        );
       }
+
       return;
     }
+
 
     if (mode === "themes") {
-      drawFullNetwork(getFilteredFaculty(), "themes");
+
+      drawFullNetwork(
+        getFilteredFaculty(),
+        "themes"
+      );
+
       return;
     }
 
-    if (mode === "organisations") {
-      drawFullNetwork(getFilteredFaculty(), "organisations");
+
+    if (
+      mode === "organisations"
+    ) {
+
+      drawFullNetwork(
+        getFilteredFaculty(),
+        "organisations"
+      );
+
       return;
     }
 
-    drawFullNetwork(getFilteredFaculty(), "all");
+
+    drawFullNetwork(
+      getFilteredFaculty(),
+      "all"
+    );
   }
 
 
@@ -1668,12 +1883,16 @@
 
     nodes.push({
       id: staffId,
-      label: person.name || "Staff",
+      label:
+        person.name || "Staff",
       group: "staff",
-      title: person.name || "Staff",
+      title:
+        person.name || "Staff",
       shape: "dot",
-      size: 28
+      personId:
+        String(person.id)
     });
+
 
     splitItems(person.keywords)
       .forEach((theme, index) => {
@@ -1683,20 +1902,29 @@
 
         nodes.push({
           id: id,
-          label: shortLabel(theme, 28),
+          label:
+            shortLabel(
+              theme,
+              30
+            ),
           group: "theme",
-          shape: "dot",
-          size: 15
+          title: theme,
+          shape: "dot"
         });
 
-        edges.push({
-          from: staffId,
-          to: id
-        });
-
+        edges.push(
+          makeGraphEdge(
+            staffId,
+            id,
+            "theme"
+          )
+        );
       });
 
-    splitItems(person.external_organisations)
+
+    splitItems(
+      person.external_organisations
+    )
       .forEach((org, index) => {
 
         const id =
@@ -1704,96 +1932,287 @@
 
         nodes.push({
           id: id,
-          label: shortLabel(org, 28),
-          group: "organisation",
-          shape: "dot",
-          size: 15
+          label:
+            shortLabel(
+              org,
+              30
+            ),
+          group:
+            "organisation",
+          title: org,
+          shape: "dot"
         });
 
-        edges.push({
-          from: staffId,
-          to: id
-        });
-
+        edges.push(
+          makeGraphEdge(
+            staffId,
+            id,
+            "organisation"
+          )
+        );
       });
 
-    renderNetwork(nodes, edges);
+
+    const sizedNodes =
+      applyProfessionalNodeSizing(
+        nodes,
+        edges
+      )
+      .map(node => {
+
+        if (
+          node.id === staffId
+        ) {
+          return {
+            ...node,
+            size: 24
+          };
+        }
+
+        return node;
+      });
+
+
+    renderNetwork(
+      sizedNodes,
+      edges
+    );
   }
 
 
   function renderNetwork(nodes, edges) {
 
     const container =
-      document.getElementById("network");
+      document.getElementById(
+        "network"
+      );
+
+
+    if (network) {
+
+      try {
+        network.destroy();
+      } catch (error) {
+        console.warn(error);
+      }
+
+      network = null;
+    }
+
 
     const graphData = {
-      nodes: new vis.DataSet(nodes),
-      edges: new vis.DataSet(edges)
+
+      nodes:
+        new vis.DataSet(
+          nodes
+        ),
+
+      edges:
+        new vis.DataSet(
+          edges
+        )
     };
 
+
     const options = {
+
+      autoResize: true,
 
       groups: {
 
         staff: {
+
           color: {
-            background: "#3478ed",
-            border: "#2463cf"
+            background:
+              "#3b82f6",
+            border:
+              "#2563eb",
+            highlight: {
+              background:
+                "#2563eb",
+              border:
+                "#1d4ed8"
+            },
+            hover: {
+              background:
+                "#4f8ff7",
+              border:
+                "#2563eb"
+            }
+          },
+
+          font: {
+            size: 14,
+            color:
+              "#1f2937",
+            face:
+              "Arial",
+            strokeWidth: 3,
+            strokeColor:
+              "#ffffff"
           }
         },
+
 
         theme: {
+
           color: {
-            background: "#8b5cf6",
-            border: "#7443db"
+            background:
+              "#8b5cf6",
+            border:
+              "#7c3aed",
+            highlight: {
+              background:
+                "#7c3aed",
+              border:
+                "#6d28d9"
+            }
+          },
+
+          font: {
+            size: 12,
+            color:
+              "#334155",
+            face:
+              "Arial",
+            strokeWidth: 3,
+            strokeColor:
+              "#ffffff"
           }
         },
+
 
         organisation: {
+
           color: {
-            background: "#218c83",
-            border: "#17766e"
+            background:
+              "#2a9188",
+            border:
+              "#187b74",
+            highlight: {
+              background:
+                "#187b74",
+              border:
+                "#0f766e"
+            }
+          },
+
+          font: {
+            size: 12,
+            color:
+              "#334155",
+            face:
+              "Arial",
+            strokeWidth: 3,
+            strokeColor:
+              "#ffffff"
           }
         }
-
       },
+
 
       nodes: {
-        borderWidth: 1,
-        font: {
-          size: 13,
-          color: "#243244"
-        }
+
+        borderWidth: 1.5,
+
+        borderWidthSelected: 2.5,
+
+        shadow: {
+          enabled: true,
+          color:
+            "rgba(15,23,42,0.10)",
+          size: 8,
+          x: 0,
+          y: 2
+        },
+
+        chosen: true
       },
+
 
       edges: {
-        width: 1,
-        color: {
-          color: "#c7d2df",
-          highlight: "#64748b"
-        },
+
+        selectionWidth: 2,
+
+        hoverWidth: 1.4,
+
         smooth: {
-          type: "continuous"
+          enabled: true,
+          type:
+            "dynamic",
+          roundness: 0.18
         }
       },
+
 
       physics: {
+
+        enabled: true,
+
+        solver:
+          "barnesHut",
+
         stabilization: {
-          iterations: 180
+          enabled: true,
+          iterations: 320,
+          updateInterval: 30,
+          fit: true
         },
+
         barnesHut: {
-          gravitationalConstant: -5000,
-          springLength: 130,
-          springConstant: 0.035
-        }
+
+          gravitationalConstant:
+            -7600,
+
+          centralGravity:
+            0.12,
+
+          springLength:
+            175,
+
+          springConstant:
+            0.027,
+
+          damping:
+            0.26,
+
+          avoidOverlap:
+            0.9
+        },
+
+        minVelocity:
+          0.75
       },
 
+
       interaction: {
+
         hover: true,
-        navigationButtons: true,
-        keyboard: true
+
+        hoverConnectedEdges:
+          true,
+
+        selectConnectedEdges:
+          true,
+
+        navigationButtons:
+          true,
+
+        keyboard: true,
+
+        zoomView: true,
+
+        dragView: true,
+
+        dragNodes: true,
+
+        tooltipDelay: 100,
+
+        hideEdgesOnDrag:
+          true
       }
     };
+
 
     network =
       new vis.Network(
@@ -1802,30 +2221,140 @@
         options
       );
 
-    network.once("stabilizationIterationsDone", function() {
-      network.fit({
-        animation: {
-          duration: 450,
-          easingFunction: "easeInOutQuad"
-        }
-      });
-    });
 
-    network.on("click", function(params) {
+    network.once(
+      "stabilizationIterationsDone",
+      function() {
 
-      if (!params.nodes || !params.nodes.length) {
-        return;
-      }
+        network.setOptions({
+          physics: false
+        });
 
-      const node =
-        graphData.nodes.get(
-          params.nodes[0]
+        network.fit({
+          animation: {
+            duration: 420,
+            easingFunction:
+              "easeInOutQuad"
+          }
+        });
+
+        setTimeout(
+          function() {
+
+            const currentScale =
+              network.getScale();
+
+            if (
+              currentScale < 0.72
+            ) {
+
+              network.moveTo({
+                scale: 0.72,
+                animation: {
+                  duration: 250,
+                  easingFunction:
+                    "easeInOutQuad"
+                }
+              });
+            }
+          },
+          460
         );
-
-      if (node && node.personId) {
-        openColleague(node.personId);
       }
-    });
+    );
+
+
+    network.on(
+      "hoverNode",
+      function(params) {
+
+        const connected =
+          network.getConnectedEdges(
+            params.node
+          );
+
+        graphData.edges.update(
+          connected.map(edgeId => {
+
+            const edge =
+              graphData.edges.get(
+                edgeId
+              );
+
+            return {
+              id: edgeId,
+              width: 2,
+              color: {
+                color:
+                  "#8799b5",
+                opacity: 0.95
+              }
+            };
+          })
+        );
+      }
+    );
+
+
+    network.on(
+      "blurNode",
+      function() {
+
+        graphData.edges.forEach(
+          function(edge) {
+
+            const isOrg =
+              edge.relationType ===
+              "organisation";
+
+            graphData.edges.update({
+              id: edge.id,
+              width: 0.9,
+              color: {
+                color:
+                  isOrg
+                    ? "#c3d7d5"
+                    : "#ccd6e5",
+                highlight:
+                  "#6b7f9d",
+                hover:
+                  "#8597b2",
+                opacity:
+                  0.78
+              }
+            });
+          }
+        );
+      }
+    );
+
+
+    network.on(
+      "click",
+      function(params) {
+
+        if (
+          !params.nodes ||
+          !params.nodes.length
+        ) {
+          return;
+        }
+
+        const node =
+          graphData.nodes.get(
+            params.nodes[0]
+          );
+
+        if (
+          node &&
+          node.personId
+        ) {
+          openColleague(
+            node.personId
+          );
+        }
+      }
+    );
   }
 
 
