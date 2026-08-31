@@ -389,6 +389,29 @@
       align-items: flex-start;
     }
 
+
+    .radio-row.inline-options {
+      flex-direction: row;
+      flex-wrap: wrap;
+      gap: 14px 28px;
+      align-items: center;
+    }
+
+    .radio-row.inline-options label {
+      display: inline-flex;
+      align-items: center;
+      gap: 7px;
+      margin: 0;
+    }
+
+    @media (max-width: 650px) {
+      .radio-row.inline-options {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+      }
+    }
+
     .form-actions {
       display: flex;
       justify-content: flex-end;
@@ -605,7 +628,7 @@
 
           <div class="field">
             <label>4. Would you be interested to have your work showcased via Faculty comms and/or AI@Southampton?</label>
-            <div class="radio-row">
+            <div class="radio-row inline-options">
               <label><input type="radio" name="showcase_interest" value="Yes, please contact me"> Yes, please contact me</label>
               <label><input type="radio" name="showcase_interest" value="No"> No</label>
             </div>
@@ -666,7 +689,7 @@
               11. I understand that my responses will be stored securely and used for internal research-mapping and strategic purposes within the Faculty. Any reporting will anonymise individual contributions unless I am contacted for permission. Where clear opportunities or shared interests emerge, colleagues may be contacted directly to help connect related work and foster collaboration.
             </label>
 
-            <div class="radio-row">
+            <div class="radio-row inline-options">
               <label>
                 <input type="radio" name="consent" value="I consent to my data being used for the stated purposes" required>
                 I consent to my data being used for the stated purposes
