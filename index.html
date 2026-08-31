@@ -3,11 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
   <title>Faculty Connections Explorer</title>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
+  <script
+    type="text/javascript"
+    src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js">
+  </script>
+
   <style>
+
     * {
       box-sizing: border-box;
     }
@@ -20,7 +27,7 @@
     }
 
     header {
-      background: #ffffff;
+      background: white;
       padding: 24px 40px;
       border-bottom: 1px solid #e5e7eb;
     }
@@ -31,10 +38,1038 @@
     }
 
     header p {
-      margin: 8px 0 0;
+      margin-top: 8px;
       color: #6b7280;
     }
 
+    .container {
+      max-width: 1250px;
+      margin: 30px auto;
+      padding: 0 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3,1fr);
+      gap: 18px;
+      margin-bottom: 25px;
+    }
+
+    .stat-card {
+      background: white;
+      border-radius: 14px;
+      padding: 22px;
+      text-align: center;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+    }
+
+    .stat-number {
+      font-size: 34px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    .stat-label {
+      color: #6b7280;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 1fr 2fr;
+      gap: 22px;
+    }
+
+    .card {
+      background: white;
+      border-radius: 14px;
+      padding: 24px;
+      box-shadow: 0 3px 12px rgba(0,0,0,0.05);
+      margin-bottom: 22px;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 12px;
+      margin-top: 8px;
+      border-radius: 8px;
+      border: 1px solid #d1d5db;
+      font-size: 15px;
+    }
+
+    .profile-name {
+      font-size: 25px;
+      font-weight: bold;
+      margin-bottom: 6px;
+    }
+
+    .department {
+      color: #6b7280;
+      margin-bottom: 20px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+
+    .tag-container {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+
+    .tag {
+      background: #eef2ff;
+      padding: 7px 11px;
+      border-radius: 20px;
+      font-size: 13px;
+    }
+
+    .placeholder {
+      text-align: center;
+      color: #9ca3af;
+      padding: 40px;
+    }
+
+    #network {
+      width: 100%;
+      height: 500px;
+      border: 1px solid #e5e7eb;
+      border-radius: 12px;
+      background: #fafafa;
+    }
+
+    .legend {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 18px;
+      margin-bottom: 15px;
+      font-size: 14px;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    .legend-circle {
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+    }
+
+    .staff-color {
+      background: #2563eb;
+    }
+
+    .theme-color {
+      background: #8b5cf6;
+    }
+
+    .org-color {
+      background: #16a34a;
+    }
+
+    .footer-note {
+      text-align: center;
+      color: #9ca3af;
+      font-size: 13px;
+      padding: 20px;
+    }
+
+    @media (max-width: 850px) {
+
+      .stats {
+        grid-template-columns: 1fr;
+      }
+
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+    }
+
+  </style>
+</head>
+
+<body>
+
+<header>
+
+  <h1>Faculty Connections Explorer</h1>
+
+  <p>
+    Explore colleagues, research interests,
+    organisations and connections.
+  </p>
+
+</header>
+
+
+<div class="container">
+
+  <div class="stats">
+
+    <div class="stat-card">
+
+      <div
+        class="stat-number"
+        id="staffCount">
+        0
+      </div>
+
+      <div class="stat-label">
+        Colleagues
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div
+        class="stat-number"
+        id="themeCount">
+        0
+      </div>
+
+      <div class="stat-label">
+        Research Themes
+      </div>
+
+    </div>
+
+
+    <div class="stat-card">
+
+      <div
+        class="stat-number"
+        id="orgCount">
+        0
+      </div>
+
+      <div class="stat-label">
+        External Organisations
+      </div>
+
+    </div>
+
+  </div>
+
+
+  <div class="main-grid">
+
+
+    <div>
+
+      <div class="card">
+
+        <h2>
+          Choose a colleague
+        </h2>
+
+        <select id="facultySelect">
+
+          <option value="">
+            Select a colleague
+          </option>
+
+        </select>
+
+      </div>
+
+
+      <div class="card">
+
+        <h2>
+          Search / Filter
+        </h2>
+
+        <input
+          type="text"
+          id="searchBox"
+          placeholder="Search AI, VR, heritage, education..."
+        />
+
+      </div>
+
+    </div>
+
+
+    <div>
+
+
+      <div
+        class="card"
+        id="profileCard">
+
+        <div class="placeholder">
+
+          Select a colleague
+          to view their profile.
+
+        </div>
+
+      </div>
+
+
+      <div class="card">
+
+        <h2>
+          Interactive Network
+        </h2>
+
+
+        <div class="legend">
+
+          <div class="legend-item">
+
+            <div
+              class="legend-circle staff-color">
+            </div>
+
+            Staff
+
+          </div>
+
+
+          <div class="legend-item">
+
+            <div
+              class="legend-circle theme-color">
+            </div>
+
+            Research Theme
+
+          </div>
+
+
+          <div class="legend-item">
+
+            <div
+              class="legend-circle org-color">
+            </div>
+
+            Organisation / Sector
+
+          </div>
+
+        </div>
+
+
+        <div id="network"></div>
+
+      </div>
+
+
+    </div>
+
+  </div>
+
+
+  <div class="footer-note">
+
+    Faculty of Arts and Humanities —
+    AI Connections Explorer
+
+  </div>
+
+</div>
+
+
+
+<script>
+
+const supabaseUrl =
+"https://qmlguyfmipslinbaqcgh.supabase.co";
+
+const supabaseKey =
+"sb_publishable_roPlnce2JAfGz_DXCy3fuA_8gc9ejVZ";
+
+
+const supabaseClient =
+supabase.createClient(
+  supabaseUrl,
+  supabaseKey
+);
+
+
+let facultyData = [];
+
+let network = null;
+
+
+
+async function loadFacultyData() {
+
+  const { data, error } =
+    await supabaseClient
+      .from("ai_faculty_data")
+      .select("*");
+
+
+  if (error) {
+
+    console.error(error);
+
+    document.getElementById(
+      "profileCard"
+    ).innerHTML =
+    "<p>Could not load faculty data.</p>";
+
+    return;
+
+  }
+
+
+  facultyData = data;
+
+
+  document.getElementById(
+    "staffCount"
+  ).textContent =
+  facultyData.length;
+
+
+  populateDropdown();
+
+  calculateStats();
+
+}
+
+
+
+function splitItems(text) {
+
+  if (!text)
+    return [];
+
+
+  return text
+    .split(/[,;\n]/)
+    .map(item =>
+      item.trim()
+    )
+    .filter(item =>
+      item
+    );
+
+}
+
+
+
+function populateDropdown() {
+
+  const select =
+    document.getElementById(
+      "facultySelect"
+    );
+
+
+  select.innerHTML =
+
+    '<option value="">Select a colleague</option>';
+
+
+  facultyData.forEach(
+    (person,index) => {
+
+      const option =
+        document.createElement(
+          "option"
+        );
+
+
+      option.value =
+        index;
+
+
+      option.textContent =
+        person.name ||
+        "Unnamed colleague";
+
+
+      select.appendChild(
+        option
+      );
+
+    }
+  );
+
+}
+
+
+
+function calculateStats() {
+
+  const themes =
+    new Set();
+
+
+  const organisations =
+    new Set();
+
+
+  facultyData.forEach(
+    person => {
+
+
+      splitItems(
+        person.keywords
+      ).forEach(
+        item =>
+        themes.add(
+          item.toLowerCase()
+        )
+      );
+
+
+      splitItems(
+        person.external_organisations
+      ).forEach(
+        item =>
+        organisations.add(
+          item.toLowerCase()
+        )
+      );
+
+    }
+  );
+
+
+  document.getElementById(
+    "themeCount"
+  ).textContent =
+  themes.size;
+
+
+  document.getElementById(
+    "orgCount"
+  ).textContent =
+  organisations.size;
+
+}
+
+
+
+function createTags(text) {
+
+  const items =
+    splitItems(text);
+
+
+  if (!items.length)
+    return "Not provided";
+
+
+  return `
+
+    <div class="tag-container">
+
+      ${
+
+        items.map(
+          item =>
+          `<span class="tag">${item}</span>`
+        ).join("")
+
+      }
+
+    </div>
+
+  `;
+
+}
+
+
+
+function showProfile(person) {
+
+  document.getElementById(
+    "profileCard"
+  ).innerHTML = `
+
+    <div class="profile-name">
+
+      ${person.name || "Unnamed colleague"}
+
+    </div>
+
+
+    <div class="department">
+
+      ${person.department || "Department not provided"}
+
+    </div>
+
+
+    <div class="section-title">
+      Research Groups
+    </div>
+
+    ${createTags(
+      person.research_groups
+    )}
+
+
+    <div class="section-title">
+      Keywords / Interests
+    </div>
+
+    ${createTags(
+      person.keywords
+    )}
+
+
+    <div class="section-title">
+      AI Research / Practice
+    </div>
+
+    <div>
+
+      ${person.ai_research || "Not provided"}
+
+    </div>
+
+
+    <div class="section-title">
+      Future Directions
+    </div>
+
+    <div>
+
+      ${person.future_directions || "Not provided"}
+
+    </div>
+
+
+    <div class="section-title">
+      External Organisations / Sectors
+    </div>
+
+    ${createTags(
+      person.external_organisations
+    )}
+
+  `;
+
+}
+
+
+
+function drawNetwork(person) {
+
+  const nodes = [];
+
+  const edges = [];
+
+
+  const staffId =
+    "staff";
+
+
+  nodes.push({
+
+    id: staffId,
+
+    label:
+      person.name ||
+      "Staff",
+
+    shape:
+      "dot",
+
+    size:
+      32,
+
+    color: {
+      background:
+        "#2563eb",
+
+      border:
+        "#1d4ed8"
+    },
+
+    font: {
+      size: 16,
+      color: "#111827"
+    }
+
+  });
+
+
+
+  const themes =
+    splitItems(
+      person.keywords
+    );
+
+
+  themes.forEach(
+    (theme,index) => {
+
+      const id =
+        "theme_" + index;
+
+
+      nodes.push({
+
+        id: id,
+
+        label:
+          theme,
+
+        shape:
+          "dot",
+
+        size:
+          19,
+
+        color: {
+
+          background:
+            "#8b5cf6",
+
+          border:
+            "#7c3aed"
+
+        }
+
+      });
+
+
+      edges.push({
+
+        from:
+          staffId,
+
+        to:
+          id
+
+      });
+
+    }
+  );
+
+
+
+  const organisations =
+    splitItems(
+      person.external_organisations
+    );
+
+
+  organisations.forEach(
+    (organisation,index) => {
+
+      const id =
+        "org_" + index;
+
+
+      nodes.push({
+
+        id: id,
+
+        label:
+          organisation,
+
+        shape:
+          "dot",
+
+        size:
+          19,
+
+        color: {
+
+          background:
+            "#16a34a",
+
+          border:
+            "#15803d"
+
+        }
+
+      });
+
+
+      edges.push({
+
+        from:
+          staffId,
+
+        to:
+          id
+
+      });
+
+    }
+  );
+
+
+
+  const container =
+    document.getElementById(
+      "network"
+    );
+
+
+  const data = {
+
+    nodes:
+      new vis.DataSet(nodes),
+
+    edges:
+      new vis.DataSet(edges)
+
+  };
+
+
+  const options = {
+
+    interaction: {
+
+      hover: true,
+
+      navigationButtons:
+        true,
+
+      keyboard:
+        true
+
+    },
+
+
+    physics: {
+
+      enabled:
+        true,
+
+      stabilization: {
+
+        iterations:
+          150
+
+      },
+
+      barnesHut: {
+
+        gravitationalConstant:
+          -5000,
+
+        springLength:
+          130,
+
+        springConstant:
+          0.04
+
+      }
+
+    },
+
+
+    edges: {
+
+      width:
+        2,
+
+      smooth: {
+
+        type:
+          "continuous"
+
+      },
+
+      color: {
+
+        color:
+          "#cbd5e1",
+
+        highlight:
+          "#64748b"
+
+      }
+
+    },
+
+
+    nodes: {
+
+      borderWidth:
+        2,
+
+      font: {
+
+        size:
+          14
+
+      }
+
+    }
+
+  };
+
+
+  network =
+    new vis.Network(
+      container,
+      data,
+      options
+    );
+
+}
+
+
+
+document
+.getElementById(
+  "facultySelect"
+)
+.addEventListener(
+  "change",
+  function () {
+
+
+    if (
+      this.value === ""
+    ) {
+
+      document.getElementById(
+        "profileCard"
+      ).innerHTML = `
+
+        <div class="placeholder">
+
+          Select a colleague
+          to view their profile.
+
+        </div>
+
+      `;
+
+
+      document.getElementById(
+        "network"
+      ).innerHTML =
+        "";
+
+
+      return;
+
+    }
+
+
+    const person =
+      facultyData[
+        this.value
+      ];
+
+
+    showProfile(
+      person
+    );
+
+
+    drawNetwork(
+      person
+    );
+
+  }
+);
+
+
+
+document
+.getElementById(
+  "searchBox"
+)
+.addEventListener(
+  "input",
+  function () {
+
+
+    const query =
+      this.value
+        .toLowerCase()
+        .trim();
+
+
+    const select =
+      document.getElementById(
+        "facultySelect"
+      );
+
+
+    select.innerHTML =
+
+      '<option value="">Select a colleague</option>';
+
+
+    facultyData.forEach(
+      (person,index) => {
+
+
+        const combined = `
+
+          ${person.name || ""}
+
+          ${person.department || ""}
+
+          ${person.keywords || ""}
+
+          ${person.research_groups || ""}
+
+          ${person.ai_research || ""}
+
+          ${person.future_directions || ""}
+
+          ${person.external_organisations || ""}
+
+        `.toLowerCase();
+
+
+        if (
+          !query ||
+          combined.includes(query)
+        ) {
+
+
+          const option =
+            document.createElement(
+              "option"
+            );
+
+
+          option.value =
+            index;
+
+
+          option.textContent =
+            person.name ||
+            "Unnamed colleague";
+
+
+          select.appendChild(
+            option
+          );
+
+        }
+
+      }
+    );
+
+  }
+);
+
+
+loadFacultyData();
+
+</script>
+
+</body>
+</html>
     .container {
       max-width: 1250px;
       margin: 30px auto;
