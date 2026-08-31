@@ -1,54 +1,1192 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
   <title>Faculty AI Connections Explorer</title>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   <script src="https://unpkg.com/vis-network/standalone/umd/vis-network.min.js"></script>
+
   <style>
-    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:#f5f7fb;color:#1f2937}
-    .header{background:#f1f5f9;padding:28px 35px;border:1px solid #d7e0ea;border-radius:0 0 20px 20px}.header h1{margin:0;font-size:36px}.header p{margin:8px 0 0;color:#526174;font-size:18px}
-    .container{max-width:1500px;margin:25px auto;padding:0 20px}.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:25px}.stat{background:#fff;border:1px solid #d7e0ea;border-radius:14px;padding:18px}.stat-number{font-size:30px;font-weight:bold}.stat-label{margin-top:4px;color:#64748b}
-    .controls{display:grid;grid-template-columns:2fr 1fr;gap:18px;margin-bottom:22px}.control-box label{display:block;font-weight:bold;margin-bottom:7px}select,input{width:100%;padding:11px;border:1px solid #aebdce;border-radius:8px;background:#fff;font-size:15px}
-    .main-grid{display:grid;grid-template-columns:2fr 1fr;gap:20px}.card{background:#fff;border:1px solid #d7e0ea;border-radius:14px;overflow:hidden}.card-title{padding:16px 20px;font-size:20px;font-weight:bold;background:#f8fafc;border-bottom:1px solid #e2e8f0}
-    #network{width:100%;height:650px;background:#fff}.legend{padding:12px 18px;border-top:1px solid #e2e8f0;display:flex;gap:18px;flex-wrap:wrap}.legend-item{display:flex;align-items:center;gap:6px}.circle{width:13px;height:13px;border-radius:50%}.blue{background:#3478ed}.purple{background:#8b5cf6}.green{background:#218c83}
-    #profile{padding:22px;min-height:650px}.profile-name{font-size:27px;font-weight:bold;margin-bottom:5px}.department{color:#64748b;margin-bottom:18px}.section-title{font-weight:bold;margin-top:20px;margin-bottom:8px}.tags{display:flex;flex-wrap:wrap;gap:7px}.tag{background:#eef2ff;padding:7px 10px;border-radius:18px;font-size:13px}.org-tag{background:#e7f7f3}.placeholder{color:#94a3b8;text-align:center;padding-top:100px}.error{color:#b91c1c;padding:20px}
-    .suggestions-title{margin:26px -22px 15px;padding:15px 22px;background:#f8fafc;border-top:1px solid #e2e8f0;border-bottom:1px solid #e2e8f0;font-size:20px;font-weight:bold}.suggestion{position:relative;padding:15px 0;border-bottom:1px solid #e2e8f0}.suggestion:last-child{border-bottom:none}.suggestion-name{font-size:18px;font-weight:bold;color:#1756a9}.suggestion-department{color:#64748b;margin:3px 0 8px}.match-score{position:absolute;right:0;top:15px;min-width:34px;padding:5px 8px;text-align:center;border-radius:18px;background:#eef4ff;color:#1756a9;font-weight:bold}.match-text{color:#475569;line-height:1.45;padding-right:40px}.footer{margin:18px 0 30px;color:#64748b;font-size:13px}
-    @media(max-width:850px){.stats,.controls,.main-grid{grid-template-columns:1fr}#network{height:500px}}
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+      background: #f5f7fb;
+      color: #1f2937;
+    }
+
+    .header {
+      background: #f1f5f9;
+      padding: 28px 35px;
+      border: 1px solid #d7e0ea;
+      border-radius: 0 0 20px 20px;
+    }
+
+    .header h1 {
+      margin: 0;
+      font-size: 36px;
+    }
+
+    .header p {
+      margin: 8px 0 0;
+      color: #526174;
+      font-size: 18px;
+    }
+
+    .container {
+      max-width: 1500px;
+      margin: 25px auto;
+      padding: 0 20px;
+    }
+
+    .stats {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      margin-bottom: 25px;
+    }
+
+    .stat {
+      background: white;
+      border: 1px solid #d7e0ea;
+      border-radius: 14px;
+      padding: 18px;
+    }
+
+    .stat-number {
+      font-size: 30px;
+      font-weight: bold;
+    }
+
+    .stat-label {
+      margin-top: 4px;
+      color: #64748b;
+    }
+
+    .controls {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 18px;
+      margin-bottom: 22px;
+    }
+
+    .control-box label {
+      display: block;
+      font-weight: bold;
+      margin-bottom: 7px;
+    }
+
+    select,
+    input {
+      width: 100%;
+      padding: 11px;
+      border: 1px solid #aebdce;
+      border-radius: 8px;
+      background: white;
+      font-size: 15px;
+    }
+
+    .main-grid {
+      display: grid;
+      grid-template-columns: 2fr 1fr;
+      gap: 20px;
+    }
+
+    .card {
+      background: white;
+      border: 1px solid #d7e0ea;
+      border-radius: 14px;
+      overflow: hidden;
+    }
+
+    .card-title {
+      padding: 16px 20px;
+      font-size: 20px;
+      font-weight: bold;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    #network {
+      width: 100%;
+      height: 650px;
+      background: white;
+    }
+
+    .legend {
+      padding: 12px 18px;
+      border-top: 1px solid #e2e8f0;
+      display: flex;
+      gap: 18px;
+      flex-wrap: wrap;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .circle {
+      width: 13px;
+      height: 13px;
+      border-radius: 50%;
+    }
+
+    .blue {
+      background: #3478ed;
+    }
+
+    .purple {
+      background: #8b5cf6;
+    }
+
+    .green {
+      background: #218c83;
+    }
+
+    #profile {
+      padding: 22px;
+      min-height: 650px;
+    }
+
+    .profile-name {
+      font-size: 27px;
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .department {
+      color: #64748b;
+      margin-bottom: 18px;
+    }
+
+    .section-title {
+      font-weight: bold;
+      margin-top: 20px;
+      margin-bottom: 8px;
+    }
+
+    .tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 7px;
+    }
+
+    .tag {
+      background: #eef2ff;
+      padding: 7px 10px;
+      border-radius: 18px;
+      font-size: 13px;
+    }
+
+    .org-tag {
+      background: #e7f7f3;
+    }
+
+    .placeholder {
+      color: #94a3b8;
+      text-align: center;
+      padding-top: 100px;
+    }
+
+    .error {
+      color: #b91c1c;
+      padding: 20px;
+    }
+
+    .suggestions-title {
+      margin: 26px -22px 15px;
+      padding: 15px 22px;
+      background: #f8fafc;
+      border-top: 1px solid #e2e8f0;
+      border-bottom: 1px solid #e2e8f0;
+      font-size: 20px;
+      font-weight: bold;
+    }
+
+    .suggestion {
+      position: relative;
+      padding: 15px 45px 15px 12px;
+      border-bottom: 1px solid #e2e8f0;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: background 0.15s ease, transform 0.15s ease;
+    }
+
+    .suggestion:hover {
+      background: #f8fafc;
+      transform: translateY(-1px);
+    }
+
+    .suggestion:last-child {
+      border-bottom: none;
+    }
+
+    .suggestion-name {
+      font-size: 18px;
+      font-weight: bold;
+      color: #1756a9;
+    }
+
+    .suggestion-department {
+      color: #64748b;
+      margin: 3px 0 8px;
+    }
+
+    .match-score {
+      position: absolute;
+      right: 0;
+      top: 15px;
+      min-width: 34px;
+      padding: 5px 8px;
+      text-align: center;
+      border-radius: 18px;
+      background: #eef4ff;
+      color: #1756a9;
+      font-weight: bold;
+    }
+
+    .match-text {
+      color: #475569;
+      line-height: 1.45;
+      padding-right: 40px;
+    }
+
+    .footer {
+      margin: 18px 0 30px;
+      color: #64748b;
+      font-size: 13px;
+    }
+
+    @media (max-width: 850px) {
+      .stats,
+      .controls,
+      .main-grid {
+        grid-template-columns: 1fr;
+      }
+
+      #network {
+        height: 500px;
+      }
+    }
   </style>
 </head>
+
 <body>
-  <div class="header"><h1>Faculty AI Connections Explorer</h1><p>Explore shared interests, complementary expertise and external connections across Faculty AI activity.</p></div>
-  <div class="container">
-    <div class="stats"><div class="stat"><div id="staffCount" class="stat-number">0</div><div class="stat-label">colleagues</div></div><div class="stat"><div id="themeCount" class="stat-number">0</div><div class="stat-label">research and practice themes</div></div><div class="stat"><div id="orgCount" class="stat-number">0</div><div class="stat-label">external organisations or sectors</div></div></div>
-    <div class="controls"><div class="control-box"><label for="facultySelect">Choose a colleague</label><select id="facultySelect"><option value="">Select a colleague</option></select></div><div class="control-box"><label for="searchBox">Filter network</label><input id="searchBox" type="text" placeholder="e.g. ethics, VR, heritage" /></div></div>
-    <div class="main-grid"><div class="card"><div class="card-title">Interactive network</div><div id="network"></div><div class="legend"><div class="legend-item"><span class="circle blue"></span>Staff</div><div class="legend-item"><span class="circle purple"></span>Theme</div><div class="legend-item"><span class="circle green"></span>Organisation/sector</div></div></div><div class="card"><div class="card-title">Profile and suggested connections</div><div id="profile"><div class="placeholder">Select a colleague to view their profile.</div></div></div></div>
-    <div class="footer">Connections are generated from self-reported faculty data.</div>
+
+  <div class="header">
+    <h1>Faculty AI Connections Explorer</h1>
+    <p>
+      Explore shared interests, complementary expertise and
+      external connections across Faculty AI activity.
+    </p>
   </div>
-  <script>
-    const SUPABASE_URL="https://qmlguyfmipslinbaqcgh.supabase.co";
-    const SUPABASE_KEY="sb_publishable_roPlnce2JAfGz_DXCy3fuA_8gc9ejVZ";
-    const db=supabase.createClient(SUPABASE_URL,SUPABASE_KEY);
-    let facultyData=[]; let network=null;
-    function splitItems(v){if(!v)return[];return String(v).split(/[,;\n]/).map(x=>x.trim()).filter(Boolean)}
-    function normaliseItems(v){return splitItems(v).map(x=>x.toLowerCase())}
-    function esc(v){if(v==null)return"";return String(v).replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;")}
-    function findShared(a,b){const s=new Set(b);return a.filter(x=>s.has(x))}
-    function getComplementaryConnections(a,b){const pairs=[["cultural heritage & archives","immersive media, vr & storytelling"],["policy & public engagement","enterprise, consultancy & ke"],["language learning & translation","ai in education & assessment"],["arts & critical theory","ai ethics"],["people-centred & participatory ai","human autonomy & agency"]];const m=[];pairs.forEach(([x,y])=>{if(a.includes(x)&&b.includes(y))m.push(`${x} ↔ ${y}`);if(a.includes(y)&&b.includes(x))m.push(`${y} ↔ ${x}`)});return m}
-    function calculateMatch(selected,candidate){const st=normaliseItems(selected.keywords),ct=normaliseItems(candidate.keywords),sg=normaliseItems(selected.research_groups),cg=normaliseItems(candidate.research_groups),so=normaliseItems(selected.external_organisations),co=normaliseItems(candidate.external_organisations);const sharedThemes=findShared(st,ct),sharedGroups=findShared(sg,cg),sharedOrgs=findShared(so,co),complementary=getComplementaryConnections(st,ct);let score=sharedThemes.length*3+sharedGroups.length*2+sharedOrgs.length*2+complementary.length*2;if(selected.department&&candidate.department&&selected.department.trim().toLowerCase()===candidate.department.trim().toLowerCase())score+=1;return{person:candidate,score,shared:[...new Set([...sharedThemes,...sharedGroups,...sharedOrgs])],complementary}}
-    function getSuggestedConnections(selected){return facultyData.filter(p=>String(p.id)!==String(selected.id)).map(p=>calculateMatch(selected,p)).filter(r=>r.score>0).sort((a,b)=>b.score-a.score).slice(0,5)}
-    async function loadData(){const{data,error}=await db.from("ai_faculty_data").select("*").order("name",{ascending:true});if(error){document.getElementById("profile").innerHTML=`<div class="error">Database error: ${esc(error.message)}</div>`;return}facultyData=data||[];updateStatistics();populateDropdown(facultyData);drawFullNetwork(facultyData)}
-    function updateStatistics(){const themes=new Set(),orgs=new Set();facultyData.forEach(p=>{splitItems(p.keywords).forEach(x=>themes.add(x.toLowerCase()));splitItems(p.external_organisations).forEach(x=>orgs.add(x.toLowerCase()))});staffCount.textContent=facultyData.length;themeCount.textContent=themes.size;orgCount.textContent=orgs.size}
-    function populateDropdown(list){facultySelect.innerHTML='<option value="">Select a colleague</option>';list.forEach(p=>{const o=document.createElement("option");o.value=p.id;o.textContent=`${p.name||"Unnamed colleague"}${p.department?" — "+p.department:""}`;facultySelect.appendChild(o)})}
-    function makeTags(v,org=false){const items=splitItems(v);if(!items.length)return"<span>Not provided</span>";return `<div class="tags">${items.map(x=>`<span class="tag ${org?"org-tag":""}">${esc(x)}</span>`).join("")}</div>`}
-    function showProfile(p){const email=p.email?`<a href="mailto:${esc(p.email)}">Email colleague</a>`:"";const suggestions=getSuggestedConnections(p);const html=suggestions.length?suggestions.map(r=>`<div class="suggestion"><div class="match-score">${r.score}</div><div class="suggestion-name">${esc(r.person.name||"Unnamed colleague")}</div><div class="suggestion-department">${esc(r.person.department||"Department not provided")}</div><div class="match-text">${r.shared.length?`<strong>Shared:</strong> ${r.shared.map(esc).join(", ")}`:""}${r.complementary.length?`<br><strong>Complementary:</strong> ${r.complementary.map(esc).join("; ")}`:""}</div></div>`).join(""):'<div style="color:#64748b;">No strong connections found yet.</div>';profile.innerHTML=`<div class="profile-name">${esc(p.name||"Unnamed colleague")}</div><div class="department">${esc(p.department||"Department not provided")}${email?" · "+email:""}</div><div class="section-title">Research groups / themes</div>${makeTags(p.research_groups)}<div class="section-title">Keywords / interests</div>${makeTags(p.keywords)}<div class="section-title">Research/activity</div><div>${esc(p.ai_research||"Not provided")}</div><div class="section-title">Future direction</div><div>${esc(p.future_directions||"Not provided")}</div><div class="section-title">External organisations / sectors</div>${makeTags(p.external_organisations,true)}<div class="suggestions-title">Suggested connections</div>${html}`}
-    function drawFullNetwork(list){const nodes=[],edges=[],ids=new Set();const add=n=>{if(!ids.has(n.id)){ids.add(n.id);nodes.push(n)}};list.forEach(p=>{const sid=`staff_${p.id}`;add({id:sid,label:p.name||"Unnamed",group:"staff",shape:"dot",size:17});splitItems(p.keywords).forEach(t=>{const id="theme_"+t.toLowerCase().replace(/[^a-z0-9]+/g,"_");add({id,label:t,group:"theme",shape:"dot",size:11});edges.push({from:sid,to:id})});splitItems(p.external_organisations).forEach(o=>{const id="org_"+o.toLowerCase().replace(/[^a-z0-9]+/g,"_");add({id,label:o,group:"organisation",shape:"dot",size:11});edges.push({from:sid,to:id})})});renderNetwork(nodes,edges)}
-    function drawPersonNetwork(p){const nodes=[],edges=[],sid=`selected_${p.id}`;nodes.push({id:sid,label:p.name||"Staff",group:"staff",shape:"dot",size:28});splitItems(p.keywords).forEach((t,i)=>{const id=`selected_theme_${i}`;nodes.push({id,label:t,group:"theme",shape:"dot",size:15});edges.push({from:sid,to:id})});splitItems(p.external_organisations).forEach((o,i)=>{const id=`selected_org_${i}`;nodes.push({id,label:o,group:"organisation",shape:"dot",size:15});edges.push({from:sid,to:id})});renderNetwork(nodes,edges)}
-    function renderNetwork(nodes,edges){const data={nodes:new vis.DataSet(nodes),edges:new vis.DataSet(edges)};const options={groups:{staff:{color:{background:"#3478ed",border:"#2463cf"}},theme:{color:{background:"#8b5cf6",border:"#7443db"}},organisation:{color:{background:"#218c83",border:"#17766e"}}},nodes:{borderWidth:1,font:{size:13,color:"#243244"}},edges:{width:1,color:{color:"#c7d2df",highlight:"#64748b"},smooth:{type:"continuous"}},physics:{stabilization:{iterations:180},barnesHut:{gravitationalConstant:-5000,springLength:130,springConstant:.035}},interaction:{hover:true,navigationButtons:true,keyboard:true}};network=new vis.Network(document.getElementById("network"),data,options)}
-    facultySelect.addEventListener("change",function(){if(!this.value){profile.innerHTML='<div class="placeholder">Select a colleague to view their profile.</div>';drawFullNetwork(facultyData);return}const p=facultyData.find(x=>String(x.id)===String(this.value));if(!p)return;showProfile(p);drawPersonNetwork(p)});
-    searchBox.addEventListener("input",function(){const q=this.value.trim().toLowerCase();if(!q){populateDropdown(facultyData);drawFullNetwork(facultyData);return}const filtered=facultyData.filter(p=>`${p.name||""} ${p.department||""} ${p.research_groups||""} ${p.keywords||""} ${p.ai_research||""} ${p.future_directions||""} ${p.external_organisations||""}`.toLowerCase().includes(q));populateDropdown(filtered);drawFullNetwork(filtered)});
-    loadData();
-  </script>
+
+  <div class="container">
+
+    <div class="stats">
+      <div class="stat">
+        <div id="staffCount" class="stat-number">0</div>
+        <div class="stat-label">colleagues</div>
+      </div>
+
+      <div class="stat">
+        <div id="themeCount" class="stat-number">0</div>
+        <div class="stat-label">research and practice themes</div>
+      </div>
+
+      <div class="stat">
+        <div id="orgCount" class="stat-number">0</div>
+        <div class="stat-label">external organisations or sectors</div>
+      </div>
+    </div>
+
+    <div class="controls">
+      <div class="control-box">
+        <label>Choose a colleague</label>
+
+        <select id="facultySelect">
+          <option value="">Select a colleague</option>
+        </select>
+      </div>
+
+      <div class="control-box">
+        <label>Filter network</label>
+
+        <input
+          id="searchBox"
+          type="text"
+          placeholder="e.g. ethics, VR, heritage"
+        >
+      </div>
+    </div>
+
+    <div class="main-grid">
+
+      <div class="card">
+
+        <div class="card-title">
+          Interactive network
+        </div>
+
+        <div id="network"></div>
+
+        <div class="legend">
+          <div class="legend-item">
+            <span class="circle blue"></span>
+            Staff
+          </div>
+
+          <div class="legend-item">
+            <span class="circle purple"></span>
+            Theme
+          </div>
+
+          <div class="legend-item">
+            <span class="circle green"></span>
+            Organisation/sector
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+
+        <div class="card-title">
+          Profile and suggested connections
+        </div>
+
+        <div id="profile">
+          <div class="placeholder">
+            Select a colleague to view their profile.
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+
+    <div class="footer">
+      Connections are generated from self-reported faculty data.
+    </div>
+
+  </div>
+
+<script>
+
+  const SUPABASE_URL =
+    "https://qmlguyfmipslinbaqcgh.supabase.co";
+
+  const SUPABASE_KEY =
+    "sb_publishable_roPlnce2JAfGz_DXCy3fuA_8gc9ejVZ";
+
+  const db = supabase.createClient(
+    SUPABASE_URL,
+    SUPABASE_KEY
+  );
+
+  let facultyData = [];
+  let network = null;
+
+
+  function splitItems(value) {
+
+    if (!value) {
+      return [];
+    }
+
+    return String(value)
+      .split(/[,;\\n]/)
+      .map(item => item.trim())
+      .filter(Boolean);
+  }
+
+
+  function normaliseItems(value) {
+
+    return splitItems(value)
+      .map(item => item.toLowerCase());
+  }
+
+
+  function escapeHTML(value) {
+
+    if (value === null || value === undefined) {
+      return "";
+    }
+
+    return String(value)
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll('"', "&quot;")
+      .replaceAll("'", "&#039;");
+  }
+
+
+  function findShared(listA, listB) {
+
+    const setB = new Set(listB);
+
+    return listA.filter(
+      item => setB.has(item)
+    );
+  }
+
+
+  function getComplementaryConnections(
+    themesA,
+    themesB
+  ) {
+
+    const pairs = [
+      [
+        "cultural heritage & archives",
+        "immersive media, vr & storytelling"
+      ],
+      [
+        "policy & public engagement",
+        "enterprise, consultancy & ke"
+      ],
+      [
+        "language learning & translation",
+        "ai in education & assessment"
+      ],
+      [
+        "arts & critical theory",
+        "ai ethics"
+      ],
+      [
+        "people-centred & participatory ai",
+        "human autonomy & agency"
+      ]
+    ];
+
+    const matches = [];
+
+    pairs.forEach(pair => {
+
+      const [a, b] = pair;
+
+      if (
+        themesA.includes(a) &&
+        themesB.includes(b)
+      ) {
+        matches.push(`${a} ↔${b}`);
+      }
+
+      if (
+        themesA.includes(b) &&
+        themesB.includes(a)
+      ) {
+        matches.push(`${b} ↔${a}`);
+      }
+
+    });
+
+    return matches;
+  }
+
+
+  function calculateMatch(
+    selected,
+    candidate
+  ) {
+
+    const selectedThemes =
+      normaliseItems(selected.keywords);
+
+    const candidateThemes =
+      normaliseItems(candidate.keywords);
+
+    const selectedGroups =
+      normaliseItems(selected.research_groups);
+
+    const candidateGroups =
+      normaliseItems(candidate.research_groups);
+
+    const selectedOrgs =
+      normaliseItems(selected.external_organisations);
+
+    const candidateOrgs =
+      normaliseItems(candidate.external_organisations);
+
+    const sharedThemes =
+      findShared(
+        selectedThemes,
+        candidateThemes
+      );
+
+    const sharedGroups =
+      findShared(
+        selectedGroups,
+        candidateGroups
+      );
+
+    const sharedOrgs =
+      findShared(
+        selectedOrgs,
+        candidateOrgs
+      );
+
+    const complementary =
+      getComplementaryConnections(
+        selectedThemes,
+        candidateThemes
+      );
+
+    let score = 0;
+
+    score += sharedThemes.length * 3;
+    score += sharedGroups.length * 2;
+    score += sharedOrgs.length * 2;
+    score += complementary.length * 2;
+
+    if (
+      selected.department &&
+      candidate.department &&
+      selected.department.trim().toLowerCase() ===
+      candidate.department.trim().toLowerCase()
+    ) {
+      score += 1;
+    }
+
+    const shared = [
+      ...sharedThemes,
+      ...sharedGroups,
+      ...sharedOrgs
+    ];
+
+    return {
+      person: candidate,
+      score: score,
+      shared: [...new Set(shared)],
+      complementary: complementary
+    };
+  }
+
+
+  function getSuggestedConnections(selected) {
+
+    return facultyData
+      .filter(person =>
+        String(person.id) !== String(selected.id)
+      )
+
+      .map(person =>
+        calculateMatch(
+          selected,
+          person
+        )
+      )
+
+      .filter(result =>
+        result.score > 0
+      )
+
+      .sort(
+        (a, b) =>
+          b.score - a.score
+      )
+
+      .slice(0, 5);
+  }
+
+
+  async function loadData() {
+
+    const { data, error } = await db
+      .from("ai_faculty_data")
+      .select("*")
+      .order("name", { ascending: true });
+
+    if (error) {
+
+      console.error(error);
+
+      document.getElementById("profile").innerHTML =
+        `<div class="error">
+          Database error: ${escapeHTML(error.message)}
+        </div>`;
+
+      return;
+    }
+
+    facultyData = data || [];
+
+    updateStatistics();
+    populateDropdown(facultyData);
+    drawFullNetwork(facultyData);
+  }
+
+
+  function updateStatistics() {
+
+    const themes = new Set();
+    const organisations = new Set();
+
+    facultyData.forEach(person => {
+
+      splitItems(person.keywords)
+        .forEach(item => {
+          themes.add(item.toLowerCase());
+        });
+
+      splitItems(person.external_organisations)
+        .forEach(item => {
+          organisations.add(item.toLowerCase());
+        });
+
+    });
+
+    document.getElementById("staffCount").textContent =
+      facultyData.length;
+
+    document.getElementById("themeCount").textContent =
+      themes.size;
+
+    document.getElementById("orgCount").textContent =
+      organisations.size;
+  }
+
+
+  function populateDropdown(list) {
+
+    const select =
+      document.getElementById("facultySelect");
+
+    select.innerHTML =
+      `<option value="">
+        Select a colleague
+      </option>`;
+
+    list.forEach(person => {
+
+      const option =
+        document.createElement("option");
+
+      option.value = person.id;
+
+      option.textContent =
+        `${person.name || "Unnamed colleague"}${
+          person.department
+            ? " — " + person.department
+            : ""
+        }`;
+
+      select.appendChild(option);
+    });
+  }
+
+
+  function makeTags(value, organisation = false) {
+
+    const items = splitItems(value);
+
+    if (!items.length) {
+      return "<span>Not provided</span>";
+    }
+
+    return `
+      <div class="tags">
+        ${items.map(item => `
+          <span class="tag ${organisation ? "org-tag" : ""}">
+            ${escapeHTML(item)}
+          </span>
+        `).join("")}
+      </div>
+    `;
+  }
+
+
+  function showProfile(person) {
+
+    const emailLink = person.email
+      ? `<a href="mailto:${escapeHTML(person.email)}">
+           Email colleague
+         </a>`
+      : "";
+
+    const suggestions =
+      getSuggestedConnections(person);
+
+    let suggestionsHTML = "";
+
+    if (!suggestions.length) {
+
+      suggestionsHTML = `
+        <div style="color:#64748b;">
+          No strong connections found yet.
+        </div>
+      `;
+
+    } else {
+
+      suggestionsHTML =
+        suggestions.map(result => {
+
+          const colleague = result.person;
+
+          const sharedText =
+            result.shared.length
+              ? `<strong>Shared:</strong> ${
+                  result.shared
+                    .map(escapeHTML)
+                    .join(", ")
+                }`
+              : "";
+
+          const complementaryText =
+            result.complementary.length
+              ? `<br><strong>Complementary:</strong> ${
+                  result.complementary
+                    .map(escapeHTML)
+                    .join("; ")
+                }`
+              : "";
+
+          return `
+            <div class="suggestion" data-id="${escapeHTML(colleague.id)}">
+
+              <div class="match-score">
+                ${result.score}
+              </div>
+
+              <div class="suggestion-name">
+                ${escapeHTML(
+                  colleague.name ||
+                  "Unnamed colleague"
+                )}
+              </div>
+
+              <div class="suggestion-department">
+                ${escapeHTML(
+                  colleague.department ||
+                  "Department not provided"
+                )}
+              </div>
+
+              <div class="match-text">
+                ${sharedText}
+                ${complementaryText}
+              </div>
+
+            </div>
+          `;
+
+        }).join("");
+    }
+
+    document.getElementById("profile").innerHTML = `
+
+      <div class="profile-name">
+        ${escapeHTML(
+          person.name ||
+          "Unnamed colleague"
+        )}
+      </div>
+
+      <div class="department">
+
+        ${escapeHTML(
+          person.department ||
+          "Department not provided"
+        )}
+
+        ${emailLink ? " · " + emailLink : ""}
+
+      </div>
+
+      <div class="section-title">
+        Research groups / themes
+      </div>
+
+      ${makeTags(
+        person.research_groups
+      )}
+
+      <div class="section-title">
+        Keywords / interests
+      </div>
+
+      ${makeTags(
+        person.keywords
+      )}
+
+      <div class="section-title">
+        Research/activity
+      </div>
+
+      <div>
+        ${escapeHTML(
+          person.ai_research ||
+          "Not provided"
+        )}
+      </div>
+
+      <div class="section-title">
+        Future direction
+      </div>
+
+      <div>
+        ${escapeHTML(
+          person.future_directions ||
+          "Not provided"
+        )}
+      </div>
+
+      <div class="section-title">
+        External organisations / sectors
+      </div>
+
+      ${makeTags(
+        person.external_organisations,
+        true
+      )}
+
+      <div class="suggestions-title">
+        Suggested connections
+      </div>
+
+      ${suggestionsHTML}
+    `;
+  }
+
+
+  function openColleague(id) {
+    const person = facultyData.find(
+      item => String(item.id) === String(id)
+    );
+
+    if (!person) return;
+
+    const select = document.getElementById("facultySelect");
+
+    if (![...select.options].some(option => String(option.value) === String(person.id))) {
+      document.getElementById("searchBox").value = "";
+      populateDropdown(facultyData);
+    }
+
+    select.value = String(person.id);
+    showProfile(person);
+    drawPersonNetwork(person);
+
+    document.querySelector(".main-grid").scrollIntoView({
+      behavior: "smooth",
+      block: "start"
+    });
+  }
+
+
+  function drawFullNetwork(list) {
+
+    const nodes = [];
+    const edges = [];
+    const nodeIds = new Set();
+
+    function addNode(node) {
+
+      if (!nodeIds.has(node.id)) {
+        nodeIds.add(node.id);
+        nodes.push(node);
+      }
+    }
+
+    list.forEach(person => {
+
+      const staffId =
+        `staff_${person.id}`;
+
+      addNode({
+        id: staffId,
+        label: person.name || "Unnamed",
+        group: "staff",
+        shape: "dot",
+        size: 17
+      });
+
+      splitItems(person.keywords)
+        .forEach(theme => {
+
+          const themeId =
+            "theme_" +
+            theme.toLowerCase()
+              .replace(/[^a-z0-9]+/g, "_");
+
+          addNode({
+            id: themeId,
+            label: theme,
+            group: "theme",
+            shape: "dot",
+            size: 11
+          });
+
+          edges.push({
+            from: staffId,
+            to: themeId
+          });
+
+        });
+
+      splitItems(person.external_organisations)
+        .forEach(org => {
+
+          const orgId =
+            "org_" +
+            org.toLowerCase()
+              .replace(/[^a-z0-9]+/g, "_");
+
+          addNode({
+            id: orgId,
+            label: org,
+            group: "organisation",
+            shape: "dot",
+            size: 11
+          });
+
+          edges.push({
+            from: staffId,
+            to: orgId
+          });
+
+        });
+
+    });
+
+    renderNetwork(nodes, edges);
+  }
+
+
+  function drawPersonNetwork(person) {
+
+    const nodes = [];
+    const edges = [];
+
+    const staffId =
+      `selected_${person.id}`;
+
+    nodes.push({
+      id: staffId,
+      label: person.name || "Staff",
+      group: "staff",
+      shape: "dot",
+      size: 28
+    });
+
+    splitItems(person.keywords)
+      .forEach((theme, index) => {
+
+        const id =
+          `selected_theme_${index}`;
+
+        nodes.push({
+          id: id,
+          label: theme,
+          group: "theme",
+          shape: "dot",
+          size: 15
+        });
+
+        edges.push({
+          from: staffId,
+          to: id
+        });
+
+      });
+
+    splitItems(person.external_organisations)
+      .forEach((org, index) => {
+
+        const id =
+          `selected_org_${index}`;
+
+        nodes.push({
+          id: id,
+          label: org,
+          group: "organisation",
+          shape: "dot",
+          size: 15
+        });
+
+        edges.push({
+          from: staffId,
+          to: id
+        });
+
+      });
+
+    renderNetwork(nodes, edges);
+  }
+
+
+  function renderNetwork(nodes, edges) {
+
+    const container =
+      document.getElementById("network");
+
+    const graphData = {
+      nodes: new vis.DataSet(nodes),
+      edges: new vis.DataSet(edges)
+    };
+
+    const options = {
+
+      groups: {
+
+        staff: {
+          color: {
+            background: "#3478ed",
+            border: "#2463cf"
+          }
+        },
+
+        theme: {
+          color: {
+            background: "#8b5cf6",
+            border: "#7443db"
+          }
+        },
+
+        organisation: {
+          color: {
+            background: "#218c83",
+            border: "#17766e"
+          }
+        }
+
+      },
+
+      nodes: {
+        borderWidth: 1,
+        font: {
+          size: 13,
+          color: "#243244"
+        }
+      },
+
+      edges: {
+        width: 1,
+        color: {
+          color: "#c7d2df",
+          highlight: "#64748b"
+        },
+        smooth: {
+          type: "continuous"
+        }
+      },
+
+      physics: {
+        stabilization: {
+          iterations: 180
+        },
+        barnesHut: {
+          gravitationalConstant: -5000,
+          springLength: 130,
+          springConstant: 0.035
+        }
+      },
+
+      interaction: {
+        hover: true,
+        navigationButtons: true,
+        keyboard: true
+      }
+    };
+
+    network =
+      new vis.Network(
+        container,
+        graphData,
+        options
+      );
+  }
+
+
+  document
+    .getElementById("facultySelect")
+    .addEventListener("change", function() {
+
+      if (!this.value) {
+
+        document.getElementById("profile").innerHTML = `
+          <div class="placeholder">
+            Select a colleague to view their profile.
+          </div>
+        `;
+
+        drawFullNetwork(facultyData);
+
+        return;
+      }
+
+      const person =
+        facultyData.find(
+          item =>
+            String(item.id) ===
+            String(this.value)
+        );
+
+      if (!person) {
+        return;
+      }
+
+      showProfile(person);
+      drawPersonNetwork(person);
+    });
+
+
+  document
+    .getElementById("searchBox")
+    .addEventListener("input", function() {
+
+      const query =
+        this.value
+          .trim()
+          .toLowerCase();
+
+      if (!query) {
+        populateDropdown(facultyData);
+        drawFullNetwork(facultyData);
+        return;
+      }
+
+      const filtered =
+        facultyData.filter(person => {
+
+          const text = `
+            ${person.name || ""}
+            ${person.department || ""}
+            ${person.research_groups || ""}
+            ${person.keywords || ""}
+            ${person.ai_research || ""}
+            ${person.future_directions || ""}
+            ${person.external_organisations || ""}
+          `.toLowerCase();
+
+          return text.includes(query);
+        });
+
+      populateDropdown(filtered);
+      drawFullNetwork(filtered);
+    });
+
+
+  document.getElementById("profile").addEventListener("click", function(event) {
+    const card = event.target.closest(".suggestion[data-id]");
+    if (!card) return;
+    openColleague(card.dataset.id);
+  });
+
+
+  loadData();
+
+</script>
+
 </body>
 </html>
