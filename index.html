@@ -682,6 +682,7 @@
             >
             <div class="email-help">
               Please use your University of Southampton email address ending in @soton.ac.uk.
+              Each email address can be submitted only once.
             </div>
           </div>
 
@@ -1937,6 +1938,27 @@
       facultyFormMessage.textContent =
         "Submission was not sent because consent was not provided.";
       facultyFormMessage.className = "form-message error";
+      return;
+    }
+
+    const { data: existingEmailRows, error: existingEmailError } = await db
+      .from("ai_faculty_data")
+      .select("id,email")
+      .ilike("email", email);
+
+    if (existingEmailError) {
+      console.error(existingEmailError);
+      facultyFormMessage.textContent =
+        "Could not validate the email address. Please try again.";
+      facultyFormMessage.className = "form-message error";
+      return;
+    }
+
+    if (existingEmailRows && existingEmailRows.length > 0) {
+      facultyFormMessage.textContent =
+        "This University of Southampton email address has already been submitted.";
+      facultyFormMessage.className = "form-message error";
+      document.getElementById("formEmail").focus();
       return;
     }
 
