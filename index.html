@@ -1144,7 +1144,7 @@ ${escapeHTML(item)}
 </div>
 `;
 }
-function limitedText(value, wordLimit = 200) {
+function limitedText(value, wordLimit = 50) {
   const text = String(value || "Not provided").trim() || "Not provided";
   const words = text.split(/\s+/);
 
