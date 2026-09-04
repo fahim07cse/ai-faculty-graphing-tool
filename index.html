@@ -249,7 +249,7 @@ font-size: 13px;
 line-height: 1.45;
 }
 .profile-answer {
-white-space: pre-line;
+white-space: normal;
 color: #1f2937;
 font-size: 15px;
 line-height: 1.6;
@@ -257,7 +257,12 @@ font-weight: 400;
 overflow-wrap: break-word;
 word-break: normal;
 max-width: 100%;
-margin: 0 0 6px;
+margin: 0 0 8px;
+}
+
+.profile-answer .read-more-text {
+  display: block;
+  margin: 0;
 }
 
 .read-more-button {
@@ -1144,7 +1149,7 @@ ${escapeHTML(item)}
 </div>
 `;
 }
-function limitedText(value, wordLimit = 50) {
+function limitedText(value, wordLimit = 200) {
   const text = String(value || "Not provided").trim() || "Not provided";
   const words = text.split(/\s+/);
 
@@ -1221,13 +1226,13 @@ ${makeTags(person.keywords)}
 Research/activity
 </div>
 <div class="profile-answer">
-${limitedText(person.ai_research)}
+${limitedText(person.ai_research, 50)}
 </div>
 <div class="section-title">
 Future direction
 </div>
 <div class="profile-answer">
-${limitedText(person.future_directions)}
+${limitedText(person.future_directions, 50)}
 </div>
 <div class="section-title">
 External organisations / sectors
