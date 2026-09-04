@@ -1080,6 +1080,7 @@ async function loadData() {
 const { data, error } = await db
 .from("ai_faculty_data")
 .select("*")
+.eq("is_deleted", false)
 .order("name", { ascending: true });
 if (error) {
 console.error(error);
