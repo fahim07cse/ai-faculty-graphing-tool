@@ -285,6 +285,17 @@ margin: 0 0 8px;
 .read-more-text.expanded .read-more-extra {
   display: inline;
 }
+
+.read-more-tag-extra {
+  display: none;
+}
+.read-more-tags.expanded .read-more-tag-extra {
+  display: inline-flex;
+}
+.tag-read-more-button {
+  align-self: center;
+  margin: 2px 0 2px 4px;
+}
 .match-breakdown {
 display: flex;
 flex-wrap: wrap;
@@ -1119,18 +1130,29 @@ person.department
 select.appendChild(option);
 });
 }
-function makeTags(value, organisation = false) {
+function makeTags(value, organisation = false, itemLimit = null) {
 const items = splitItems(value);
 if (!items.length) {
 return "<span>Not provided</span>";
 }
+
+const hasLimit = Number.isFinite(itemLimit) && itemLimit > 0 && items.length > itemLimit;
+const visibleItems = hasLimit ? items.slice(0, itemLimit) : items;
+const hiddenItems = hasLimit ? items.slice(itemLimit) : [];
+
 return `
-<div class="tags">
-${items.map(item => `
+<div class="tags${hasLimit ? " read-more-tags" : ""}">
+${visibleItems.map(item => `
 <span class="tag ${organisation ? "org-tag" : ""}">
 ${escapeHTML(item)}
 </span>
 `).join("")}
+${hiddenItems.map(item => `
+<span class="tag ${organisation ? "org-tag" : ""} read-more-tag-extra">
+${escapeHTML(item)}
+</span>
+`).join("")}
+${hasLimit ? `<button class="read-more-button tag-read-more-button" type="button" aria-expanded="false">Read more</button>` : ""}
 </div>
 `;
 }
@@ -1184,23 +1206,13 @@ No Q3/Q5/Q6/Q7/Q8-based connections found yet.
 } else {
 suggestionsHTML = suggestions.map(result => {
 const colleague = result.person;
-const sharedConceptList = [...new Set(
-result.breakdown.flatMap(item => item.concepts || [])
-)].slice(0, 10);
-const sharedText = sharedConceptList.length
-? `<strong>Shared:</strong> ${sharedConceptList.map(escapeHTML).join(", ")}`
-: `<strong>Shared:</strong> Related AI interests and activity`;
 return `
 <div class="suggestion" data-id="${escapeHTML(colleague.id)}">
-<div class="match-score">${result.score}%</div>
 <div class="suggestion-name">
 ${escapeHTML(colleague.name || "Unnamed colleague")}
 </div>
 <div class="suggestion-department">
 ${escapeHTML(colleague.department || "Department not provided")}
-</div>
-<div class="match-text">
-${sharedText}
 </div>
 </div>
 `;
@@ -1237,7 +1249,7 @@ ${limitedText(person.future_directions, 50)}
 <div class="section-title">
 External organisations / sectors
 </div>
-${makeTags(person.external_organisations, true)}
+${makeTags(person.external_organisations, true, 6)}
 <div class="suggestions-title">
 Suggested connections
 </div>
@@ -1471,7 +1483,7 @@ nodes.push({
 id: colleagueId,
 label: shortLabel(colleague.name || "Unnamed", 25),
 group: "staff",
-title: `${colleague.name || "Unnamed"} · ${result.score}% match · ${reasons}`,
+title: `${colleague.name || "Unnamed"}${reasons ? " · Suggested based on " + reasons : ""}`,
 shape: "dot",
 personId: String(colleague.id),
 size: 15 + Math.min(result.score, 100) * 0.07
@@ -1481,8 +1493,8 @@ from: selectedId,
 to: colleagueId,
 relationType: "match",
 width: 1.2 + Math.min(result.score, 100) * 0.035,
-label: `${result.score}%`,
-title: `Match based on ${reasons}`,
+label: "",
+title: reasons ? `Suggested based on ${reasons}` : "Suggested connection",
 color: {
 color: "#9fb2cf",
 highlight: "#4f6f9f",
@@ -1961,7 +1973,9 @@ document.getElementById("profile").addEventListener("click", function(event) {
     event.preventDefault();
     event.stopPropagation();
 
-    const wrapper = readMoreButton.closest(".read-more-text");
+    const textWrapper = readMoreButton.closest(".read-more-text");
+    const tagsWrapper = readMoreButton.closest(".read-more-tags");
+    const wrapper = textWrapper || tagsWrapper;
     if (!wrapper) return;
 
     const expanded = wrapper.classList.toggle("expanded");
