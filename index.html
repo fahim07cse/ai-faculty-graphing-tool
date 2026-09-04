@@ -1130,8 +1130,32 @@ person.department
 select.appendChild(option);
 });
 }
+function cleanOrganisationItem(item) {
+  let text = String(item || "").trim();
+
+  // Remove common introductory / filler wording from Q8 before display.
+  text = text
+    .replace(/^(?:and\s+)?finally\s*[:,\-]?\s*/i, "")
+    .replace(/^my\s+current\s+partners\s+are\s*:\s*/i, "")
+    .replace(/^current\s+partners\s+are\s*:\s*/i, "")
+    .replace(/^my\s+partners\s+are\s*:\s*/i, "")
+    .trim();
+
+  const fillerOnly = /^(?:my\s+current\s+partners\s+are|current\s+partners\s+are|my\s+partners\s+are|finally|and\s+finally)[:.\s-]*$/i;
+  if (!text || fillerOnly.test(text)) return "";
+
+  return text;
+}
+
 function makeTags(value, organisation = false, itemLimit = null) {
-const items = splitItems(value);
+let items = splitItems(value);
+
+if (organisation) {
+  items = items
+    .map(cleanOrganisationItem)
+    .filter(Boolean);
+}
+
 if (!items.length) {
 return "<span>Not provided</span>";
 }
