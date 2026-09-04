@@ -773,12 +773,8 @@ For new records, each email address can be submitted only once. In edit mode, th
 </label>
 <div class="radio-row inline-options">
 <label>
-<input type="radio" name="consent" value="I consent to my data being used for the stated purposes" required>
+<input type="checkbox" name="consent" value="I consent to my data being used for the stated purposes" required>
 I consent to my data being used for the stated purposes
-</label>
-<label>
-<input type="radio" name="consent" value="I do not consent to my data being used for the stated purposes" required>
-I do not consent to my data being used for the stated purposes
 </label>
 </div>
 </div>
@@ -2014,7 +2010,10 @@ function populateFacultyForm(person) {
   });
 
   setRadioValue("showcase_interest", person.showcase_interest);
-  setRadioValue("consent", person.consent);
+
+  // Q11 must be actively ticked for every Add or Edit save.
+  const consentInput = facultyForm.querySelector('input[name="consent"]');
+  if (consentInput) consentInput.checked = false;
 }
 
 async function findFacultyForEdit() {
