@@ -541,6 +541,9 @@
     let admin = null;
     let currentAdminPassword = ''; // kept only in memory while this page is open
     let pendingExcelRows = [];
+    let pendingExcelHash = '';
+    let pendingExcelName = '';
+    let pendingExcelAlreadyImported = false;
 
     const fields = [
       ['name', 'Name', 'text'],
@@ -983,6 +986,25 @@
       return String(value).trim();
     }
 
+    async function sha256Hex(arrayBuffer) {
+      const digest = await crypto.subtle.digest('SHA-256', arrayBuffer);
+      return Array.from(new Uint8Array(digest))
+        .map(byte => byte.toString(16).padStart(2, '0'))
+        .join('');
+    }
+
+    async function wasExcelAlreadyImported(fileHash) {
+      if (!fileHash) return false;
+      const { data, error } = await db
+        .from('admin_activity_log_simple')
+        .select('id')
+        .eq('action', 'import_excel')
+        .ilike('details', `%file_sha256=${fileHash}%`)
+        .limit(1);
+      if (error) throw error;
+      return !!(data && data.length);
+    }
+
     function excelDateToISO(value) {
       if (!value) return null;
       if (value instanceof Date && !Number.isNaN(value.getTime())) return value.toISOString();
@@ -1062,6 +1084,9 @@
 
     document.getElementById('uploadExcelBtn').addEventListener('click', () => {
       pendingExcelRows = [];
+      pendingExcelHash = '';
+      pendingExcelName = '';
+      pendingExcelAlreadyImported = false;
       document.getElementById('excelFileInput').value = '';
       document.getElementById('excelSummary').classList.add('hidden');
       document.getElementById('excelPreviewWrap').classList.add('hidden');
@@ -1084,6 +1109,19 @@
       message.textContent = 'Reading Excel…';
       try {
         const buffer = await file.arrayBuffer();
+        pendingExcelHash = await sha256Hex(buffer);
+        pendingExcelName = file.name || 'Excel file';
+        pendingExcelAlreadyImported = await wasExcelAlreadyImported(pendingExcelHash);
+
+        if (pendingExcelAlreadyImported) {
+          document.getElementById('excelSummary').classList.add('hidden');
+          document.getElementById('excelPreviewWrap').classList.add('hidden');
+          document.getElementById('importExcelBtn').classList.add('hidden');
+          pendingExcelRows = [];
+          message.textContent = 'This exact Excel file has already been imported. Upload blocked to prevent duplicate imports.';
+          return;
+        }
+
         const workbook = XLSX.read(buffer, { type: 'array', cellDates: true });
         if (!workbook.SheetNames.length) throw new Error('No worksheet was found in this Excel file.');
         const sheet = workbook.Sheets[workbook.SheetNames[0]];
@@ -1113,7 +1151,11 @@
       const button = document.getElementById('importExcelBtn');
       const message = document.getElementById('excelUploadMsg');
       if (!pendingExcelRows.length) return;
-      if (!confirm('Import the previewed Excel rows into the faculty database? Existing emails will be updated.')) return;
+      if (pendingExcelAlreadyImported) {
+        message.textContent = 'This exact Excel file has already been imported. Import blocked.';
+        return;
+      }
+      if (!confirm('Import the previewed Excel rows into the faculty database? Existing emails will be updated, but blank Excel cells will not erase existing database values.')) return;
 
       button.disabled = true;
       let inserted = 0, updated = 0, skipped = 0, errors = 0;
@@ -1144,11 +1186,21 @@
           if (existing) {
             delete payload.start_time;
             delete payload.completion_time;
-            payload.is_deleted = false;
-            payload.deleted_at = null;
+
+            // Safe update: blank Excel cells never overwrite existing database values.
+            const safePayload = {};
+            Object.entries(payload).forEach(([key, value]) => {
+              if (value !== null && value !== undefined && String(value).trim() !== '') {
+                safePayload[key] = value;
+              }
+            });
+            safePayload.is_deleted = false;
+            safePayload.deleted_at = null;
+            safePayload.last_modified_time = new Date().toISOString();
+
             const { error } = await db
               .from('ai_faculty_data')
-              .update(payload)
+              .update(safePayload)
               .eq('id', existing.id);
             if (error) throw error;
             updated++;
@@ -1166,7 +1218,12 @@
         }
       }
 
-      await logActivity('import_excel', '', `${inserted} inserted, ${updated} updated, ${skipped} skipped, ${errors} error(s)`);
+      await logActivity(
+        'import_excel',
+        '',
+        `${inserted} inserted, ${updated} updated, ${skipped} skipped, ${errors} error(s); file=${pendingExcelName}; file_sha256=${pendingExcelHash}`
+      );
+      pendingExcelAlreadyImported = true;
       await refresh();
       button.disabled = false;
       message.textContent = `Import complete — New: ${inserted} | Updated: ${updated} | Skipped: ${skipped} | Errors: ${errors}` +
